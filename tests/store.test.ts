@@ -12,12 +12,12 @@ describe("JsonlMemoryStore", () => {
     await store.add({
       id: "1",
       kind: "doc",
-      text: "Dubai setup checklist: residency, bank, freezone",
+      text: "Project setup checklist: residency, bank, company formation",
       createdAt: new Date().toISOString(),
-      tags: ["LOCAL_PROJECT"],
+      tags: ["project"] ,
     });
 
-    const hits = await store.search("LOCAL_PROJECT residency", { limit: 5 });
+    const hits = await store.search("residency checklist", { limit: 5 });
     expect(hits.length).toBeGreaterThan(0);
     expect(hits[0].item.text).toContain("Dubai");
   });
