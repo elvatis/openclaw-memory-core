@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# build artifacts from accidental test compilation
+tests/*.js
+tests/*.js.map
+tests/*.d.ts
