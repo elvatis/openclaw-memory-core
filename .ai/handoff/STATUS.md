@@ -1,6 +1,6 @@
 # openclaw-memory-core: Current State of the Nation
 
-> Last updated: 2026-02-27 by Claude Opus 4.6 (v0.2 roadmap definition)
+> Last updated: 2026-02-27 by Claude Opus 4.6 (T-002: expand test coverage)
 > Commit: pending
 >
 > **Rule:** This file is rewritten (not appended) at the end of every session.
@@ -13,7 +13,7 @@
 | Check | Result | Notes |
 |-------|--------|-------|
 | `build` | OK (verified) | tsc compiles cleanly |
-| `test` | OK (verified) | 15/15 tests pass (vitest) |
+| `test` | OK (verified) | 109/109 tests pass (vitest) |
 | `lint` | N/A | No linter configured yet |
 | `type-check` | OK (verified) | Strict mode, no errors |
 
@@ -53,7 +53,7 @@
 
 | Gap | Severity | Description |
 |-----|----------|-------------|
-| Test coverage gaps | HIGH | No tests for embedding.ts or utils.ts; 12 redaction rules untested (issue #6) |
+| Test coverage gaps | RESOLVED | 109 tests across 4 suites; safePath, embedding edge cases, redaction edge cases all covered (issue #6) |
 | update() method | HIGH | MemoryStore has no update operation (issue #4) |
 | TTL/expiry | MEDIUM | No automatic memory expiration (issue #5) |
 | CI pipeline | MEDIUM | No GitHub Actions workflow (issue #2) |
@@ -66,6 +66,7 @@
 
 | Item | Resolution |
 |------|-----------|
+| T-002 test coverage expansion | Completed 2026-02-27 - 109 tests (up from 15); safePath, embedding, redaction edge cases |
 | v0.2 roadmap definition | Completed 2026-02-27 - 5 new issues created (#4-#8), 3 existing issues labeled (#1-#3) |
 | Initial scaffold | Created 2026-02-24 |
 

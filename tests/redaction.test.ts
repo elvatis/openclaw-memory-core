@@ -244,4 +244,118 @@ describe("DefaultRedactor", () => {
     expect(hfMatch).toBeDefined();
     expect(hfMatch!.count).toBe(2);
   });
+
+  // --- Edge cases ---
+
+  it("returns empty matches array for clean text", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("Just a normal log line with no secrets.");
+    expect(out.matches).toEqual([]);
+    expect(out.hadSecrets).toBe(false);
+  });
+
+  it("handles empty string input", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("");
+    expect(out.redactedText).toBe("");
+    expect(out.hadSecrets).toBe(false);
+    expect(out.matches).toEqual([]);
+  });
+
+  it("never stores actual secret values in matches", () => {
+    const r = new DefaultRedactor();
+    const secretKey = "sk-" + "abcdefghijklmnopqrstuvwxyz1234567890";
+    const out = r.redact(`KEY=${secretKey}`);
+    // The matches array must contain only rule names and counts, never actual secret text
+    for (const m of out.matches) {
+      expect(m).toHaveProperty("rule");
+      expect(m).toHaveProperty("count");
+      expect(Object.keys(m).sort()).toEqual(["count", "rule"]);
+      expect(typeof m.rule).toBe("string");
+      expect(typeof m.count).toBe("number");
+    }
+  });
+
+  it("redacts secrets embedded in multiline text", () => {
+    const r = new DefaultRedactor();
+    const input = `line one
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+line three`;
+    const out = r.redact(input);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:AWS_ACCESS_KEY]");
+    expect(out.redactedText).toContain("line one");
+    expect(out.redactedText).toContain("line three");
+  });
+
+  it("does not false-positive on short strings resembling key prefixes", () => {
+    const r = new DefaultRedactor();
+    // "sk-" alone is too short to be a real OpenAI key
+    const out = r.redact("sk-short");
+    // The pattern requires 20+ chars after the prefix
+    expect(out.hadSecrets).toBe(false);
+  });
+
+  it("redacts OpenAI svcacct keys", () => {
+    const r = new DefaultRedactor();
+    const fakeKey = "sk-svcacct-" + "abcdefghijklmnopqrstuvwxyz1234567890";
+    const out = r.redact(`KEY=${fakeKey}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:OPENAI_KEY]");
+  });
+
+  it("redacts GitHub gho_ tokens (OAuth)", () => {
+    const r = new DefaultRedactor();
+    const fakeToken = "gho_" + "a".repeat(36);
+    const out = r.redact(`TOKEN=${fakeToken}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:GITHUB_TOKEN]");
+  });
+
+  it("redacts GitHub ghs_ tokens (server-to-server)", () => {
+    const r = new DefaultRedactor();
+    const fakeToken = "ghs_" + "b".repeat(36);
+    const out = r.redact(`TOKEN=${fakeToken}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:GITHUB_TOKEN]");
+  });
+
+  it("redacts Slack xoxa- (app) tokens", () => {
+    const r = new DefaultRedactor();
+    const fakeToken = "xoxa-" + "123456789-abcdefghij";
+    const out = r.redact(`SLACK=${fakeToken}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:SLACK_TOKEN]");
+  });
+
+  it("redacts secret= and passwd= variations", () => {
+    const r = new DefaultRedactor();
+    const out1 = r.redact("secret=my_long_secret_value_here");
+    expect(out1.hadSecrets).toBe(true);
+    const out2 = r.redact("passwd=supersecretpassword");
+    expect(out2.hadSecrets).toBe(true);
+  });
+
+  it("handles text with only whitespace", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("   \n\t  ");
+    expect(out.hadSecrets).toBe(false);
+    expect(out.redactedText).toBe("   \n\t  ");
+  });
+
+  it("redacted text never contains the original secret", () => {
+    const r = new DefaultRedactor();
+    const secret = "sk-" + "UniqueTokenAbcdefghijklmno12345";
+    const out = r.redact(`my key: ${secret}`);
+    expect(out.redactedText).not.toContain(secret);
+  });
+
+  it("preserves surrounding context while redacting", () => {
+    const r = new DefaultRedactor();
+    const fakeKey = "sk-" + "abcdefghijklmnopqrstuvwxyz1234567890";
+    const out = r.redact(`before ${fakeKey} after`);
+    expect(out.redactedText).toContain("before");
+    expect(out.redactedText).toContain("after");
+    expect(out.redactedText).toContain("[REDACTED:OPENAI_KEY]");
+  });
 });

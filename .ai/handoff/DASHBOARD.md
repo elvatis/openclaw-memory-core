@@ -9,7 +9,7 @@
 
 | Name | Version | Build | Tests | Status | Notes |
 |------|---------|-------|-------|--------|-------|
-| openclaw-memory-core | 0.1.0 | OK | OK (15 tests) | Stable | Core utilities library |
+| openclaw-memory-core | 0.1.0 | OK | OK (109 tests) | Stable | Core utilities library |
 
 **Legend:** OK passing - FAIL failing - stub/mock - pending - blocked
 
@@ -19,10 +19,10 @@
 
 | Suite | Tests | Status | Last Run |
 |-------|-------|--------|----------|
-| redaction.test.ts | 8 | OK | 2026-02-27 |
-| store.test.ts | 7 | OK | 2026-02-27 |
-| embedding.test.ts | 0 | Missing | - |
-| utils.test.ts | 0 | Missing | - |
+| embedding.test.ts | 24 | OK | 2026-02-27 |
+| utils.test.ts | 27 | OK | 2026-02-27 |
+| redaction.test.ts | 43 | OK | 2026-02-27 |
+| store.test.ts | 15 | OK | 2026-02-27 |
 
 ---
 
@@ -30,9 +30,9 @@
 
 | Field | Value |
 |-------|-------|
-| Current task | None (roadmap defined) |
-| Phase | planning |
-| Last completed | T-001: Define v0.2 roadmap (2026-02-27) |
+| Current task | None |
+| Phase | implementing |
+| Last completed | T-002: Expand test coverage (2026-02-27) |
 | Rate limit | None |
 
 ---
@@ -46,7 +46,7 @@
 | [#3](https://github.com/homeofe/openclaw-memory-core/issues/3) | Injection/exfiltration test suite | High | security, v0.2 | Open |
 | [#4](https://github.com/homeofe/openclaw-memory-core/issues/4) | Add update() method to MemoryStore interface | High | enhancement, v0.2 | Open |
 | [#5](https://github.com/homeofe/openclaw-memory-core/issues/5) | Add TTL/expiry support for memory items | Medium | enhancement, v0.2 | Open |
-| [#6](https://github.com/homeofe/openclaw-memory-core/issues/6) | Expand test coverage for embedding, utils, and redaction | High | testing, v0.2 | Open |
+| [#6](https://github.com/homeofe/openclaw-memory-core/issues/6) | Expand test coverage for embedding, utils, and redaction | High | testing, v0.2 | Done |
 | [#7](https://github.com/homeofe/openclaw-memory-core/issues/7) | Improve README with full API reference and usage examples | Medium | documentation, v0.2 | Open |
 | [#8](https://github.com/homeofe/openclaw-memory-core/issues/8) | Add bulk operations and append-optimized writes | Low | enhancement, v0.2 | Open |
 
