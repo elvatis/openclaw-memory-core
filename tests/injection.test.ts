@@ -707,3 +707,264 @@ describe("Path traversal and file system safety", () => {
     expect(fetched!.text).toBe("../../../../etc/shadow");
   });
 });
+
+// ---------------------------------------------------------------------------
+// 10. ReDoS (Regular Expression Denial of Service) resistance
+// ---------------------------------------------------------------------------
+
+describe("ReDoS resistance", () => {
+  const redactor = new DefaultRedactor();
+
+  it("redactor completes in bounded time on pathological repeated prefixes", () => {
+    // Craft input with many near-matches that could cause backtracking
+    // e.g., repeated "sk-" followed by short strings (just under the min length threshold)
+    const pathological = ("sk-short ").repeat(5000);
+    const start = performance.now();
+    const result = redactor.redact(pathological);
+    const elapsed = performance.now() - start;
+    // Must finish in under 2 seconds (should be <100ms in practice)
+    expect(elapsed).toBeLessThan(2000);
+    expect(result.redactedText).toBeDefined();
+  });
+
+  it("redactor completes in bounded time on long strings of special regex chars", () => {
+    // Characters that interact with regex quantifiers
+    const pathological = ("password=" + "a".repeat(10) + " ").repeat(1000);
+    const start = performance.now();
+    const result = redactor.redact(pathological);
+    const elapsed = performance.now() - start;
+    expect(elapsed).toBeLessThan(2000);
+    expect(result.hadSecrets).toBe(true);
+  });
+
+  it("redactor completes in bounded time on nested BEGIN/END blocks", () => {
+    // Attempt to cause backtracking in the private key regex
+    const pathological = ("-----BEGIN RSA PRIVATE KEY-----\n" + "A".repeat(200) + "\n").repeat(100);
+    const start = performance.now();
+    const result = redactor.redact(pathological);
+    const elapsed = performance.now() - start;
+    expect(elapsed).toBeLessThan(2000);
+    expect(result.redactedText).toBeDefined();
+  });
+
+  it("redactor completes in bounded time on long JWT-like strings", () => {
+    // Three segments of base64url that keep growing
+    const seg = "eyJ" + "A".repeat(5000);
+    const pathological = `${seg}.${seg}.${seg}`;
+    const start = performance.now();
+    const result = redactor.redact(pathological);
+    const elapsed = performance.now() - start;
+    expect(elapsed).toBeLessThan(2000);
+    expect(result.redactedText).toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 11. Encoded payloads (base64, URL-encoding, hex)
+// ---------------------------------------------------------------------------
+
+describe("Encoded payload handling", () => {
+  const redactor = new DefaultRedactor();
+
+  it("detects base64-encoded secrets when decoded inline (consumer responsibility)", () => {
+    // Base64-encoding a secret hides it from pattern matching - this is expected
+    // The test documents that the redactor works on plaintext, not encoded forms
+    const secret = "sk-abcdefghijklmnopqrstuvwxyz1234567890";
+    const b64 = Buffer.from(secret).toString("base64");
+
+    // The base64-encoded form should NOT be detected (redactor works on plaintext)
+    const result = redactor.redact(b64);
+    // This is expected behavior: consumers must decode before redacting
+    expect(result.hadSecrets).toBe(false);
+
+    // But the decoded form IS detected
+    const decoded = Buffer.from(b64, "base64").toString("utf-8");
+    const result2 = redactor.redact(decoded);
+    expect(result2.hadSecrets).toBe(true);
+    expect(result2.redactedText).not.toContain(secret);
+  });
+
+  it("detects secrets in URL-encoded context", () => {
+    // URL-encoded key - the prefix "sk-" is preserved in URL encoding
+    const key = "sk-abcdefghijklmnopqrstuvwxyz1234567890";
+    const result = redactor.redact(`https://example.com?key=${key}`);
+    expect(result.hadSecrets).toBe(true);
+    expect(result.redactedText).not.toContain(key);
+  });
+
+  it("stores base64-encoded content without interpretation", async () => {
+    const { store } = makeStore("-enc1");
+    const b64Payload = Buffer.from('{"admin": true, "role": "superuser"}').toString("base64");
+    const item = makeItem({ id: "enc1", text: b64Payload });
+    await store.add(item);
+    const fetched = await store.get("enc1");
+    // Stored verbatim, no interpretation
+    expect(fetched!.text).toBe(b64Payload);
+  });
+
+  it("stores hex-encoded content without interpretation", async () => {
+    const { store } = makeStore("-enc2");
+    const hexPayload = Buffer.from("rm -rf /").toString("hex");
+    const item = makeItem({ id: "enc2", text: hexPayload });
+    await store.add(item);
+    const fetched = await store.get("enc2");
+    expect(fetched!.text).toBe(hexPayload);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 12. maxItems boundary enforcement
+// ---------------------------------------------------------------------------
+
+describe("maxItems boundary enforcement", () => {
+  it("store enforces maxItems limit under rapid sequential adds", async () => {
+    const filePath = join(tmpdir(), `inj-max-${Date.now()}.jsonl`);
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64), maxItems: 5 });
+
+    for (let i = 0; i < 10; i++) {
+      await store.add(makeItem({ id: `max-${i}`, text: `item ${i}` }));
+    }
+
+    const all = await store.list();
+    expect(all.length).toBe(5);
+    // Should keep the last 5 items (FIFO eviction)
+    expect(all[0]!.id).toBe("max-5");
+    expect(all[4]!.id).toBe("max-9");
+  });
+
+  it("store enforces maxItems limit under concurrent adds", async () => {
+    const filePath = join(tmpdir(), `inj-maxc-${Date.now()}.jsonl`);
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64), maxItems: 5 });
+
+    const adds = Array.from({ length: 15 }, (_, i) =>
+      store.add(makeItem({ id: `cmax-${i}`, text: `concurrent item ${i}` }))
+    );
+    await Promise.all(adds);
+
+    const all = await store.list();
+    expect(all.length).toBeLessThanOrEqual(5);
+  });
+
+  it("maxItems of 1 keeps only the most recent item", async () => {
+    const filePath = join(tmpdir(), `inj-max1-${Date.now()}.jsonl`);
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64), maxItems: 1 });
+
+    await store.add(makeItem({ id: "first", text: "first" }));
+    await store.add(makeItem({ id: "second", text: "second" }));
+    await store.add(makeItem({ id: "third", text: "third" }));
+
+    const all = await store.list();
+    expect(all.length).toBe(1);
+    expect(all[0]!.id).toBe("third");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 13. Redaction idempotency and composability
+// ---------------------------------------------------------------------------
+
+describe("Redaction idempotency", () => {
+  const redactor = new DefaultRedactor();
+
+  it("redacting already-redacted output produces stable output", () => {
+    const input = "password=hunter2 and key=sk-abcdefghijklmnopqrstuvwxyz1234567890";
+    const first = redactor.redact(input);
+    const second = redactor.redact(first.redactedText);
+    // Second pass should not further mangle the output
+    expect(second.redactedText).toBe(first.redactedText);
+  });
+
+  it("bracket-style redaction placeholders are not detected as secrets", () => {
+    // Bracket-style placeholders (e.g., [REDACTED:OPENAI_KEY]) must not trigger
+    // further redaction. The generic_password pattern matches "password=[REDACTED]"
+    // because it sees a password= prefix followed by 8+ chars - that placeholder
+    // is tested separately below.
+    const safePlaceholders = [
+      "[REDACTED:OPENAI_KEY]",
+      "[REDACTED:GITHUB_TOKEN]",
+      "[REDACTED:JWT]",
+      "[REDACTED:DB_CONN_STRING]",
+      "[REDACTED:PRIVATE_KEY_BLOCK]",
+      "Bearer [REDACTED]",
+    ];
+    for (const p of safePlaceholders) {
+      const result = redactor.redact(p);
+      expect(result.hadSecrets).toBe(false);
+      expect(result.redactedText).toBe(p);
+    }
+  });
+
+  it("generic_password placeholder triggers re-detection but output is stable", () => {
+    // "password=[REDACTED]" matches the generic_password pattern because
+    // "[REDACTED]" is 10 chars matching [^\s'"]{8,}. This is harmless:
+    // the replacement produces the same "password=[REDACTED]" placeholder.
+    const placeholder = "password=[REDACTED]";
+    const result = redactor.redact(placeholder);
+    // The pattern fires, but the output converges to a stable form
+    expect(result.redactedText).toBe("password=[REDACTED]");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 14. Duplicate ID handling and data integrity edge cases
+// ---------------------------------------------------------------------------
+
+describe("Duplicate ID and data integrity edge cases", () => {
+  it("adding two items with the same ID results in both being stored", async () => {
+    const { store } = makeStore("-dup1");
+    await store.add(makeItem({ id: "dup", text: "first version" }));
+    await store.add(makeItem({ id: "dup", text: "second version" }));
+
+    // get() returns whichever it finds first
+    const fetched = await store.get("dup");
+    expect(fetched).toBeDefined();
+
+    // list() may return both - the store does not enforce uniqueness
+    const all = await store.list();
+    expect(all.length).toBe(2);
+  });
+
+  it("delete removes all copies of a duplicate ID", async () => {
+    const { store, filePath } = makeStore("-dup2");
+    await store.add(makeItem({ id: "dup", text: "copy 1" }));
+    await store.add(makeItem({ id: "dup", text: "copy 2" }));
+
+    await store.delete("dup");
+    const all = await store.list();
+    expect(all.length).toBe(0);
+
+    // Raw file should be empty too
+    const raw = await fsPromises.readFile(filePath, "utf-8");
+    expect(raw.trim()).toBe("");
+  });
+
+  it("invalid kind on add() throws TypeError", async () => {
+    const { store } = makeStore("-badkind1");
+    const item = makeItem();
+    // Force an invalid kind past TypeScript
+    (item as Record<string, unknown>).kind = "malicious";
+    await expect(store.add(item)).rejects.toThrow(TypeError);
+  });
+
+  it("invalid kind on update() throws TypeError", async () => {
+    const { store } = makeStore("-badkind2");
+    await store.add(makeItem({ id: "bk1", text: "safe" }));
+    await expect(
+      store.update("bk1", { kind: "evil" as never })
+    ).rejects.toThrow(TypeError);
+  });
+
+  it("update on non-existent ID returns undefined without side effects", async () => {
+    const { store } = makeStore("-noexist");
+    await store.add(makeItem({ id: "exists", text: "here" }));
+
+    const result = await store.update("ghost", { text: "phantom" });
+    expect(result).toBeUndefined();
+
+    // Original item is unaffected
+    const original = await store.get("exists");
+    expect(original!.text).toBe("here");
+    const all = await store.list();
+    expect(all.length).toBe(1);
+  });
+});
