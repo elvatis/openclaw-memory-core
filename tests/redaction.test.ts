@@ -477,3 +477,4 @@ describe("Redaction - injection and exfiltration resistance", () => {
     expect(out.hadSecrets).toBe(false);
   });
 });
+

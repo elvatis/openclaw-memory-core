@@ -1422,3 +1422,4 @@ describe("Search score invariants", () => {
     }
   });
 });
+
