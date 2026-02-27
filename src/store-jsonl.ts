@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 import path from "node:path";
-import type { Embedder, MemoryItem, MemoryKind, MemoryStore, SearchHit, SearchOpts } from "./types.js";
+import type { Embedder, ListOpts, MemoryItem, MemoryKind, MemoryStore, SearchHit, SearchOpts } from "./types.js";
 import { cosine } from "./embedding.js";
 
 const VALID_KINDS = new Set<string>(["fact", "decision", "doc", "note"]);
@@ -24,7 +24,13 @@ function isValidMemoryItem(x: unknown): x is MemoryItem {
   );
 }
 
-function matchesFilter(item: MemoryItem, kind?: MemoryKind, tags?: string[]): boolean {
+/** Returns true if the item has an expiresAt in the past. */
+function isExpired(item: MemoryItem, now: string): boolean {
+  return item.expiresAt !== undefined && item.expiresAt <= now;
+}
+
+function matchesFilter(item: MemoryItem, kind?: MemoryKind, tags?: string[], includeExpired?: boolean, now?: string): boolean {
+  if (!includeExpired && now && isExpired(item, now)) return false;
   if (kind && item.kind !== kind) return false;
   if (tags && tags.length > 0) {
     const itemTags = item.tags ?? [];
@@ -66,7 +72,10 @@ export class JsonlMemoryStore implements MemoryStore {
 
   async get(id: string): Promise<MemoryItem | undefined> {
     const records = await this._readAll();
-    return records.find((r) => r.item.id === id)?.item;
+    const record = records.find((r) => r.item.id === id);
+    if (!record) return undefined;
+    if (isExpired(record.item, new Date().toISOString())) return undefined;
+    return record.item;
   }
 
   async update(id: string, partial: Partial<Omit<MemoryItem, "id">>): Promise<MemoryItem | undefined> {
@@ -105,13 +114,11 @@ export class JsonlMemoryStore implements MemoryStore {
     });
   }
 
-  async list(opts?: { limit?: number; kind?: MemoryKind; tags?: string[] }): Promise<MemoryItem[]> {
+  async list(opts?: ListOpts): Promise<MemoryItem[]> {
     const records = await this._readAll();
-    const kindFilter = opts?.kind;
-    const tagsFilter = opts?.tags;
-    const filtered = (kindFilter !== undefined || (tagsFilter?.length ?? 0) > 0)
-      ? records.filter((r) => matchesFilter(r.item, kindFilter, tagsFilter))
-      : records;
+    const now = new Date().toISOString();
+    const includeExpired = opts?.includeExpired ?? false;
+    const filtered = records.filter((r) => matchesFilter(r.item, opts?.kind, opts?.tags, includeExpired, now));
     const lim = opts?.limit ? Math.max(1, opts.limit) : filtered.length;
     return filtered.slice(-lim).map((r) => r.item);
   }
@@ -119,17 +126,30 @@ export class JsonlMemoryStore implements MemoryStore {
   async search(query: string, opts?: SearchOpts): Promise<SearchHit[]> {
     const q = await this.embedder.embed(query);
     const records = await this._readAll();
+    const now = new Date().toISOString();
+    const includeExpired = opts?.includeExpired ?? false;
     const hits: SearchHit[] = [];
 
     for (const r of records) {
       if (!r.embedding) continue;
-      if (!matchesFilter(r.item, opts?.kind, opts?.tags)) continue;
+      if (!matchesFilter(r.item, opts?.kind, opts?.tags, includeExpired, now)) continue;
       hits.push({ item: r.item, score: clamp01((cosine(q, r.embedding) + 1) / 2) });
     }
 
     hits.sort((a, b) => b.score - a.score);
     const limit = Math.max(1, Math.trunc(opts?.limit ?? 10));
     return hits.slice(0, limit);
+  }
+
+  async purgeExpired(): Promise<number> {
+    return this._enqueue(async () => {
+      const records = await this._readAll();
+      const now = new Date().toISOString();
+      const kept = records.filter((r) => !isExpired(r.item, now));
+      const purged = records.length - kept.length;
+      if (purged > 0) await this._writeAll(kept);
+      return purged;
+    });
   }
 
   /** Queue a write-side operation so concurrent callers never interleave. */

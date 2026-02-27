@@ -5,6 +5,8 @@ export interface MemoryItem {
   kind: MemoryKind;
   text: string;
   createdAt: string; // ISO
+  /** Optional expiry timestamp (ISO 8601). Items past this time are excluded from reads by default. */
+  expiresAt?: string;
   source?: {
     channel?: string;
     from?: string;
@@ -24,6 +26,16 @@ export interface SearchOpts {
   limit?: number;
   kind?: MemoryKind;
   tags?: string[];
+  /** When true, include items that have passed their expiresAt. Default: false. */
+  includeExpired?: boolean;
+}
+
+export interface ListOpts {
+  limit?: number;
+  kind?: MemoryKind;
+  tags?: string[];
+  /** When true, include items that have passed their expiresAt. Default: false. */
+  includeExpired?: boolean;
 }
 
 export interface MemoryStore {
@@ -33,7 +45,9 @@ export interface MemoryStore {
   update(id: string, partial: Partial<Omit<MemoryItem, "id">>): Promise<MemoryItem | undefined>;
   delete(id: string): Promise<boolean>;
   search(query: string, opts?: SearchOpts): Promise<SearchHit[]>;
-  list(opts?: { limit?: number; kind?: MemoryKind; tags?: string[] }): Promise<MemoryItem[]>;
+  list(opts?: ListOpts): Promise<MemoryItem[]>;
+  /** Remove all items whose expiresAt is in the past. Returns the number of purged items. */
+  purgeExpired(): Promise<number>;
 }
 
 export interface RedactionResult {
