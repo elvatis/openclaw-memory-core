@@ -14,7 +14,7 @@
 
 - **TypeScript:** strict mode, Zod for I/O validation, Prettier formatting
 - **Testing:** Vitest (`pnpm test` / `npm run test`)
-- **Build:** `tsc` — must pass before every commit
+- **Build:** `tsc` - must pass before every commit
 
 ## Branching & Commits
 
@@ -33,7 +33,7 @@ Commit format:
 
 - **Zero-Persistence**: memory contents processed in RAM only; nothing written to disk except explicitly configured store paths
 - **No PII in logs**: redaction must happen before any data is logged
-- **Library-first**: this is a shared library consumed by brain/docs plugins — keep it pure, no side effects at import time
+- **Library-first**: this is a shared library consumed by brain/docs plugins - keep it pure, no side effects at import time
 
 ## Testing
 

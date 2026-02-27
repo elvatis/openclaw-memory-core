@@ -39,7 +39,7 @@ export interface MemoryStore {
 export interface RedactionResult {
   redactedText: string;
   hadSecrets: boolean;
-  /** Stores only which rule fired and how many times — never the actual matched text. */
+  /** Stores only which rule fired and how many times - never the actual matched text. */
   matches: Array<{ rule: string; count: number }>;
 }
 
