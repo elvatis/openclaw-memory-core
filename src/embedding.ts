@@ -1,4 +1,4 @@
-import type { Embedder } from "./types.js";
+import type { Embedder, EmbedderOptions } from "./types.js";
 
 // Deterministic, local, dependency-free embedder.
 // Not SOTA semantics, but stable and safe for offline vector search.

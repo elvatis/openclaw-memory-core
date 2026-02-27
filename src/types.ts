@@ -61,10 +61,39 @@ export interface Redactor {
   redact(text: string): RedactionResult;
 }
 
+/**
+ * Pluggable embeddings backend. The default implementation is HashEmbedder
+ * (deterministic, local, zero-dependency). Swap in any provider that
+ * satisfies this interface - for example an OpenAI, Cohere, or local-model
+ * adapter.
+ *
+ * ```ts
+ * const myEmbedder: Embedder = {
+ *   id: "openai-text-embedding-3-small",
+ *   dims: 1536,
+ *   async embed(text) { return callOpenAI(text); },
+ * };
+ * const store = new JsonlMemoryStore({ filePath, embedder: myEmbedder });
+ * ```
+ */
 export interface Embedder {
+  /** Generate a numeric embedding vector for the given text. */
   embed(text: string): Promise<number[]>;
+  /** Number of dimensions the embedder produces. */
   dims: number;
+  /** Unique identifier for this embedder implementation. */
   id: string;
+}
+
+/**
+ * Options accepted by `createEmbedder()`. When no custom embedder is
+ * supplied, a HashEmbedder with the specified dimensions is used.
+ */
+export interface EmbedderOptions {
+  /** Supply a custom Embedder implementation to override the default HashEmbedder. */
+  custom?: Embedder;
+  /** Dimensions for the default HashEmbedder (ignored when `custom` is set). Default: 256. */
+  dims?: number;
 }
 
 // ---------------------------------------------------------------------------
