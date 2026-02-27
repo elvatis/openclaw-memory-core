@@ -50,22 +50,13 @@
 
 ---
 
-## T-004: Injection/exfiltration test suite (GitHub issue #3)
-
-**Goal:** Create security test fixtures and tests verifying plugins do not store secrets and do not execute payloads.
-
-**What to do:**
-1. Create test fixtures with prompt injection patterns, exfiltration attempts, encoded payloads
-2. Verify redactor catches them
-3. Verify store does not execute any content
-4. Add to CI
-
----
-
 ## Recently Completed
 
 | Item | Resolution |
 |------|-----------|
+| T-004: Injection/exfiltration test suite | Completed 2026-02-27 - 67 tests across 14 categories covering prompt injection, redaction bypass, JSONL integrity, ReDoS, encoded payloads, maxItems enforcement, redaction idempotency, duplicate IDs, kind validation. 176 total tests. |
+| T-003: Add update() method | Completed 2026-02-27 - update() in interface, store, and 8 tests |
+| T-002: Expand test coverage | Completed 2026-02-27 - 109 tests (up from 15) |
 | T-001: Define v0.2 roadmap | Completed 2026-02-27 - 5 new issues created (#4-#8), 3 existing labeled (#1-#3) |
 | Initial scaffold | Created 2026-02-24 |
 
