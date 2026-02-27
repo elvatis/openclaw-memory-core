@@ -13,8 +13,21 @@ export function expandHome(p: string): string {
  * Resolve a path and ensure it stays inside the user's home directory.
  * Throws if the resolved path would escape home (path traversal guard).
  * Uses case-insensitive comparison on Windows.
+ *
+ * Also rejects Windows-style absolute paths (e.g. C:\...) on non-Windows
+ * platforms. On Linux, path.resolve would treat "C:\Windows\..." as a
+ * relative segment appended to cwd, silently placing it inside home - which
+ * is misleading and a potential security issue.
  */
 export function safePath(p: string, label = "storePath"): string {
+  // Reject Windows absolute paths on non-Windows platforms.
+  // Match drive letters like C:\ or C:/ (case-insensitive).
+  if (process.platform !== "win32" && /^[A-Za-z]:[/\\]/.test(p)) {
+    throw new Error(
+      `[openclaw] ${label} must be inside the home directory. Got: ${p} (Windows-style absolute path on non-Windows platform)`,
+    );
+  }
+
   const resolved = path.resolve(p);
   const home = os.homedir();
   // On Windows paths are case-insensitive; normalise both sides before comparing.
