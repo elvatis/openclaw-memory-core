@@ -1,4 +1,4 @@
-{
+﻿{
   "aahp_version": "3.0",
   "project": "openclaw-memory-core",
   "last_session": {
@@ -80,7 +80,7 @@
       "priority": "high",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
-      "github_issue": "https://github.com/homeofe/openclaw-memory-core/issues/5",
+      "github_issue": "https://github.com/elvatis/openclaw-memory-core/issues/5",
       "completed": "2026-02-27T07:47:02.408Z"
     },
     "T-006": {
@@ -89,7 +89,7 @@
       "priority": "medium",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
-      "github_issue": "https://github.com/homeofe/openclaw-memory-core/issues/2",
+      "github_issue": "https://github.com/elvatis/openclaw-memory-core/issues/2",
       "completed": "2026-02-27T07:56:50.996Z"
     },
     "T-007": {
@@ -98,7 +98,7 @@
       "priority": "medium",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
-      "github_issue": "https://github.com/homeofe/openclaw-memory-core/issues/7",
+      "github_issue": "https://github.com/elvatis/openclaw-memory-core/issues/7",
       "completed": "2026-02-27T08:01:12.610Z"
     },
     "T-008": {
@@ -107,7 +107,7 @@
       "priority": "low",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
-      "github_issue": "https://github.com/homeofe/openclaw-memory-core/issues/8",
+      "github_issue": "https://github.com/elvatis/openclaw-memory-core/issues/8",
       "completed": "2026-02-27T08:06:29.187Z"
     }
   }

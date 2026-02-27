@@ -1,4 +1,4 @@
-# openclaw-memory-core: Current State of the Nation
+﻿# openclaw-memory-core: Current State of the Nation
 
 > Last updated: 2026-02-27 by Claude Opus 4.6 (T-006: Secret scanner and CI guardrails)
 > Commit: pending
@@ -25,7 +25,7 @@
 | Component | Location | State |
 |-----------|----------|-------|
 | Local dev | `npm run ci` (typecheck + build + test + scan-secrets) | OK (verified 2026-02-27) |
-| GitHub repo | homeofe/openclaw-memory-core | Active |
+| GitHub repo | elvatis/openclaw-memory-core | Active |
 | CI pipeline | `.github/workflows/ci.yml` | Configured (issue #2) |
 
 ---

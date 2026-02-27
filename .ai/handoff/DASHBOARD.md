@@ -1,4 +1,4 @@
-# openclaw-memory-core: Build Dashboard
+﻿# openclaw-memory-core: Build Dashboard
 
 > Single source of truth for build health, test coverage, and pipeline state.
 > Updated by agents at the end of every completed task.
@@ -41,14 +41,14 @@
 
 | # | Title | Priority | Labels | Status |
 |---|-------|----------|--------|--------|
-| [#1](https://github.com/homeofe/openclaw-memory-core/issues/1) | Optional semantic embeddings backend | Medium | enhancement, v0.2 | Open |
-| [#2](https://github.com/homeofe/openclaw-memory-core/issues/2) | Secret scanner + CI guardrails | Medium | security, v0.2 | Open |
-| [#3](https://github.com/homeofe/openclaw-memory-core/issues/3) | Injection/exfiltration test suite | High | security, v0.2 | Open |
-| [#4](https://github.com/homeofe/openclaw-memory-core/issues/4) | Add update() method to MemoryStore interface | High | enhancement, v0.2 | Open |
-| [#5](https://github.com/homeofe/openclaw-memory-core/issues/5) | Add TTL/expiry support for memory items | Medium | enhancement, v0.2 | Open |
-| [#6](https://github.com/homeofe/openclaw-memory-core/issues/6) | Expand test coverage for embedding, utils, and redaction | High | testing, v0.2 | Done |
-| [#7](https://github.com/homeofe/openclaw-memory-core/issues/7) | Improve README with full API reference and usage examples | Medium | documentation, v0.2 | Open |
-| [#8](https://github.com/homeofe/openclaw-memory-core/issues/8) | Add bulk operations and append-optimized writes | Low | enhancement, v0.2 | Open |
+| [#1](https://github.com/elvatis/openclaw-memory-core/issues/1) | Optional semantic embeddings backend | Medium | enhancement, v0.2 | Open |
+| [#2](https://github.com/elvatis/openclaw-memory-core/issues/2) | Secret scanner + CI guardrails | Medium | security, v0.2 | Open |
+| [#3](https://github.com/elvatis/openclaw-memory-core/issues/3) | Injection/exfiltration test suite | High | security, v0.2 | Open |
+| [#4](https://github.com/elvatis/openclaw-memory-core/issues/4) | Add update() method to MemoryStore interface | High | enhancement, v0.2 | Open |
+| [#5](https://github.com/elvatis/openclaw-memory-core/issues/5) | Add TTL/expiry support for memory items | Medium | enhancement, v0.2 | Open |
+| [#6](https://github.com/elvatis/openclaw-memory-core/issues/6) | Expand test coverage for embedding, utils, and redaction | High | testing, v0.2 | Done |
+| [#7](https://github.com/elvatis/openclaw-memory-core/issues/7) | Improve README with full API reference and usage examples | Medium | documentation, v0.2 | Open |
+| [#8](https://github.com/elvatis/openclaw-memory-core/issues/8) | Add bulk operations and append-optimized writes | Low | enhancement, v0.2 | Open |
 
 ### Suggested implementation order
 

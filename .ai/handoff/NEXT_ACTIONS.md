@@ -1,4 +1,4 @@
-# openclaw-memory-core: Next Actions for Incoming Agent
+﻿# openclaw-memory-core: Next Actions for Incoming Agent
 
 > Priority order. Work top-down.
 > Each item should be self-contained, the agent must be able to start without asking questions.
@@ -69,5 +69,5 @@
 | Source | `src/index.ts` |
 | Build config | `tsconfig.json` |
 | Tests | `tests/` |
-| GitHub Issues | https://github.com/homeofe/openclaw-memory-core/issues |
+| GitHub Issues | https://github.com/elvatis/openclaw-memory-core/issues |
 
