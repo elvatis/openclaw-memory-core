@@ -3,11 +3,11 @@
   "project": "openclaw-memory-core",
   "last_session": {
     "agent": "claude-code",
-    "session_id": "t004-injection-tests-2026-02-27",
-    "timestamp": "2026-02-27T04:05:00.000Z",
+    "session_id": "t004-injection-tests-hardening-2026-02-27",
+    "timestamp": "2026-02-27T05:07:00.000Z",
     "commit": "pending",
     "phase": "implementing",
-    "duration_minutes": 10
+    "duration_minutes": 15
   },
   "files": {
     "STATUS.md": {
@@ -39,7 +39,7 @@
       "summary": "Standard AAHP agent workflow."
     }
   },
-  "quick_context": "T-004 completed: injection/exfiltration test suite expanded to 67 tests across 14 categories (ReDoS, encoded payloads, maxItems enforcement, redaction idempotency, duplicate IDs, kind validation). Build and tests passing (176/176). All high-priority tasks done. No blockers.",
+  "quick_context": "T-004 hardened: injection/exfiltration test suite expanded from 67 to 91 tests across 21 categories. New vectors: deserialization prototype pollution, store isolation, adversarial IDs, error recovery consistency, file truncation recovery, embedding leakage, search score invariants. Build and tests passing (200/200). All high-priority tasks done. No blockers.",
   "next_task_id": 5,
   "tasks": {
     "T-001": {
@@ -72,7 +72,7 @@
       "priority": "high",
       "depends_on": [],
       "created": "2026-02-27T01:30:00Z",
-      "completed": "2026-02-27T04:05:00.000Z"
+      "completed": "2026-02-27T05:07:00.000Z"
     }
   }
 }

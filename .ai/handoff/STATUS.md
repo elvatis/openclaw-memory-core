@@ -13,7 +13,7 @@
 | Check | Result | Notes |
 |-------|--------|-------|
 | `build` | OK (verified) | tsc compiles cleanly |
-| `test` | OK (verified) | 176/176 tests pass (vitest) |
+| `test` | OK (verified) | 200/200 tests pass (vitest) |
 | `lint` | N/A | No linter configured yet |
 | `type-check` | OK (verified) | Strict mode, no errors |
 
@@ -53,7 +53,7 @@
 
 | Gap | Severity | Description |
 |-----|----------|-------------|
-| Test coverage gaps | RESOLVED | 176 tests across 5 suites; injection/exfiltration, safePath, embedding, redaction all covered (issues #3, #6) |
+| Test coverage gaps | RESOLVED | 200 tests across 5 suites; injection/exfiltration (91 tests, 21 categories), safePath, embedding, redaction all covered (issues #3, #6) |
 | update() method | RESOLVED | update() method implemented and tested (issue #4) |
 | TTL/expiry | MEDIUM | No automatic memory expiration (issue #5) |
 | CI pipeline | MEDIUM | No GitHub Actions workflow (issue #2) |
@@ -66,7 +66,7 @@
 
 | Item | Resolution |
 |------|-----------|
-| T-004 injection/exfiltration suite | Completed 2026-02-27 - 67 injection tests across 14 categories; 176 total tests |
+| T-004 injection/exfiltration suite | Hardened 2026-02-27 - 91 injection tests across 21 categories; 200 total tests |
 | T-003 update() method | Completed 2026-02-27 - update() in interface, store, and 8 tests |
 | T-002 test coverage expansion | Completed 2026-02-27 - 109 tests (up from 15); safePath, embedding, redaction edge cases |
 | v0.2 roadmap definition | Completed 2026-02-27 - 5 new issues created (#4-#8), 3 existing issues labeled (#1-#3) |

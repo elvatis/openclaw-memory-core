@@ -968,3 +968,456 @@ describe("Duplicate ID and data integrity edge cases", () => {
     expect(all.length).toBe(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 15. Deserialization prototype pollution from JSONL file
+// ---------------------------------------------------------------------------
+
+describe("Deserialization prototype pollution from JSONL file", () => {
+  it("__proto__ key in JSONL record does not pollute Object.prototype", async () => {
+    const filePath = join(tmpdir(), `inj-deser-proto-${Date.now()}.jsonl`);
+    // Write a JSONL line with __proto__ at the top level
+    const malicious = JSON.stringify({
+      __proto__: { polluted: true },
+      item: { id: "deser1", kind: "note", text: "test", createdAt: new Date().toISOString() },
+      embedding: [],
+    });
+    await fsPromises.writeFile(filePath, malicious + "\n", "utf-8");
+
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) });
+    await store.list();
+
+    // Prototype must not be polluted
+    expect(({} as Record<string, unknown>)["polluted"]).toBeUndefined();
+    expect(Object.prototype.hasOwnProperty.call({}, "polluted")).toBe(false);
+  });
+
+  it("__proto__ in item's meta field within JSONL does not pollute Object.prototype", async () => {
+    const filePath = join(tmpdir(), `inj-deser-meta-${Date.now()}.jsonl`);
+    const record = {
+      item: {
+        id: "deser2",
+        kind: "note",
+        text: "meta pollution test",
+        createdAt: new Date().toISOString(),
+        meta: { __proto__: { isAdmin: true } },
+      },
+      embedding: [0.1, 0.2],
+    };
+    await fsPromises.writeFile(filePath, JSON.stringify(record) + "\n", "utf-8");
+
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) });
+    const fetched = await store.get("deser2");
+    expect(fetched).toBeDefined();
+    expect(({} as Record<string, unknown>)["isAdmin"]).toBeUndefined();
+  });
+
+  it("constructor.prototype pollution in JSONL file does not affect global state", async () => {
+    const filePath = join(tmpdir(), `inj-deser-ctor-${Date.now()}.jsonl`);
+    const record = {
+      item: {
+        id: "deser3",
+        kind: "note",
+        text: "constructor pollution",
+        createdAt: new Date().toISOString(),
+        meta: { constructor: { prototype: { hacked: true } } },
+      },
+      embedding: [0.5],
+    };
+    await fsPromises.writeFile(filePath, JSON.stringify(record) + "\n", "utf-8");
+
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) });
+    const all = await store.list();
+    expect(all.length).toBe(1);
+    expect(({} as Record<string, unknown>)["hacked"]).toBeUndefined();
+  });
+
+  it("records with wrong field types are silently skipped", async () => {
+    const filePath = join(tmpdir(), `inj-deser-types-${Date.now()}.jsonl`);
+    const lines = [
+      // Valid
+      JSON.stringify({ item: { id: "good", kind: "note", text: "valid", createdAt: "2024-01-01T00:00:00Z" }, embedding: [] }),
+      // id is a number (invalid)
+      JSON.stringify({ item: { id: 42, kind: "note", text: "bad id", createdAt: "2024-01-01T00:00:00Z" }, embedding: [] }),
+      // kind is a number (invalid)
+      JSON.stringify({ item: { id: "bad2", kind: 123, text: "bad kind", createdAt: "2024-01-01T00:00:00Z" }, embedding: [] }),
+      // text is an array (invalid)
+      JSON.stringify({ item: { id: "bad3", kind: "note", text: ["not", "a", "string"], createdAt: "2024-01-01T00:00:00Z" }, embedding: [] }),
+      // createdAt is null (invalid)
+      JSON.stringify({ item: { id: "bad4", kind: "note", text: "missing date", createdAt: null }, embedding: [] }),
+      // kind is invalid value
+      JSON.stringify({ item: { id: "bad5", kind: "exploit", text: "bad kind value", createdAt: "2024-01-01T00:00:00Z" }, embedding: [] }),
+    ].join("\n") + "\n";
+
+    await fsPromises.writeFile(filePath, lines, "utf-8");
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) });
+    const all = await store.list();
+    // Only the first valid record should survive
+    expect(all.length).toBe(1);
+    expect(all[0]!.id).toBe("good");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 16. Store data isolation and immutability
+// ---------------------------------------------------------------------------
+
+describe("Store data isolation and immutability", () => {
+  it("two stores with different files do not cross-contaminate", async () => {
+    const { store: store1 } = makeStore("-multi1");
+    const { store: store2 } = makeStore("-multi2");
+
+    await store1.add(makeItem({ id: "secret-1", text: "secret for store1 only" }));
+    await store2.add(makeItem({ id: "secret-2", text: "secret for store2 only" }));
+
+    // Store 1 should not see store 2's data
+    expect(await store1.get("secret-2")).toBeUndefined();
+    const list1 = await store1.list();
+    expect(list1.length).toBe(1);
+    expect(list1[0]!.id).toBe("secret-1");
+
+    // Store 2 should not see store 1's data
+    expect(await store2.get("secret-1")).toBeUndefined();
+    const list2 = await store2.list();
+    expect(list2.length).toBe(1);
+    expect(list2[0]!.id).toBe("secret-2");
+  });
+
+  it("search on one store does not return results from another store", async () => {
+    const { store: store1 } = makeStore("-multisrch1");
+    const { store: store2 } = makeStore("-multisrch2");
+
+    await store1.add(makeItem({ id: "ms1", text: "unique-keyword-alpha" }));
+    await store2.add(makeItem({ id: "ms2", text: "unique-keyword-beta" }));
+
+    const hits1 = await store1.search("unique-keyword-beta");
+    for (const hit of hits1) {
+      expect(hit.item.id).not.toBe("ms2");
+    }
+
+    const hits2 = await store2.search("unique-keyword-alpha");
+    for (const hit of hits2) {
+      expect(hit.item.id).not.toBe("ms1");
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 17. Adversarial IDs and field edge cases
+// ---------------------------------------------------------------------------
+
+describe("Adversarial IDs and field edge cases", () => {
+  it("handles empty string as ID", async () => {
+    const { store } = makeStore("-advid1");
+    await store.add(makeItem({ id: "", text: "empty id item" }));
+    const fetched = await store.get("");
+    expect(fetched).toBeDefined();
+    expect(fetched!.text).toBe("empty id item");
+  });
+
+  it("handles very long ID without crashing", async () => {
+    const { store } = makeStore("-advid2");
+    const longId = "x".repeat(10_000);
+    await store.add(makeItem({ id: longId, text: "long id item" }));
+    const fetched = await store.get(longId);
+    expect(fetched).toBeDefined();
+    expect(fetched!.id).toBe(longId);
+  });
+
+  it("handles IDs with special characters", async () => {
+    const { store } = makeStore("-advid3");
+    const specialIds = [
+      "../../../etc/passwd",
+      '"; DROP TABLE items; --',
+      "<script>alert(1)</script>",
+      "\n\r\t\0",
+      "id with spaces and\ttabs",
+      "\u0000null\u0000bytes",
+    ];
+
+    for (let i = 0; i < specialIds.length; i++) {
+      await store.add(makeItem({ id: specialIds[i]!, text: `item ${i}` }));
+    }
+
+    for (let i = 0; i < specialIds.length; i++) {
+      const fetched = await store.get(specialIds[i]!);
+      expect(fetched).toBeDefined();
+      expect(fetched!.text).toBe(`item ${i}`);
+    }
+
+    const all = await store.list();
+    expect(all.length).toBe(specialIds.length);
+  });
+
+  it("handles createdAt with adversarial date strings", async () => {
+    const { store } = makeStore("-advdt1");
+    const badDates = [
+      "not-a-date",
+      "",
+      "0000-00-00T00:00:00Z",
+      "9999-99-99T99:99:99Z",
+      "<script>alert(1)</script>",
+    ];
+
+    for (let i = 0; i < badDates.length; i++) {
+      await store.add(makeItem({ id: `dt-${i}`, createdAt: badDates[i]! }));
+    }
+
+    const all = await store.list();
+    expect(all.length).toBe(badDates.length);
+  });
+
+  it("handles tags with extreme lengths", async () => {
+    const { store } = makeStore("-advtag1");
+    const longTag = "t".repeat(50_000);
+    await store.add(makeItem({ id: "longtag", tags: [longTag] }));
+    const fetched = await store.get("longtag");
+    expect(fetched!.tags![0]).toBe(longTag);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 18. Store consistency after errors
+// ---------------------------------------------------------------------------
+
+describe("Store consistency after errors", () => {
+  it("store remains usable after a failed add (invalid kind)", async () => {
+    const { store } = makeStore("-err1");
+
+    // Add a valid item first
+    await store.add(makeItem({ id: "before-error", text: "safe" }));
+
+    // Attempt an invalid add
+    const badItem = makeItem({ id: "bad" });
+    (badItem as Record<string, unknown>).kind = "invalid";
+    await expect(store.add(badItem)).rejects.toThrow(TypeError);
+
+    // Store should still work - original item intact, new adds succeed
+    const original = await store.get("before-error");
+    expect(original).toBeDefined();
+    expect(original!.text).toBe("safe");
+
+    await store.add(makeItem({ id: "after-error", text: "still works" }));
+    const afterError = await store.get("after-error");
+    expect(afterError).toBeDefined();
+    expect(afterError!.text).toBe("still works");
+
+    const all = await store.list();
+    expect(all.length).toBe(2);
+  });
+
+  it("store remains usable after a failed update (invalid kind)", async () => {
+    const { store } = makeStore("-err2");
+    await store.add(makeItem({ id: "err2", text: "original" }));
+
+    await expect(
+      store.update("err2", { kind: "badkind" as never })
+    ).rejects.toThrow(TypeError);
+
+    // Item should be unchanged
+    const fetched = await store.get("err2");
+    expect(fetched!.text).toBe("original");
+    expect(fetched!.kind).toBe("note");
+
+    // Subsequent operations should succeed
+    const updated = await store.update("err2", { text: "updated after error" });
+    expect(updated!.text).toBe("updated after error");
+  });
+
+  it("concurrent adds with some failures do not corrupt remaining items", async () => {
+    const { store } = makeStore("-err3");
+    const ops = [];
+
+    for (let i = 0; i < 10; i++) {
+      const item = makeItem({ id: `cerr-${i}`, text: `item ${i}` });
+      // Make every 3rd item invalid
+      if (i % 3 === 0) {
+        (item as Record<string, unknown>).kind = "invalid";
+      }
+      ops.push(store.add(item).catch(() => "expected-failure"));
+    }
+
+    await Promise.all(ops);
+
+    // Valid items should all be present
+    const all = await store.list();
+    // Items 1, 2, 4, 5, 7, 8 should survive (indices not divisible by 3)
+    expect(all.length).toBe(6);
+    for (const item of all) {
+      expect(["fact", "decision", "doc", "note"]).toContain(item.kind);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 19. File truncation and corruption recovery
+// ---------------------------------------------------------------------------
+
+describe("File truncation and corruption recovery", () => {
+  it("handles JSONL file truncated mid-record", async () => {
+    const filePath = join(tmpdir(), `inj-trunc-${Date.now()}.jsonl`);
+    const validRecord = JSON.stringify({
+      item: { id: "trunc1", kind: "note", text: "valid item", createdAt: "2024-01-01T00:00:00Z" },
+      embedding: [0.1, 0.2],
+    });
+    // Intentionally truncated JSON
+    const truncated = '{"item":{"id":"trunc2","kind":"n';
+
+    await fsPromises.writeFile(filePath, validRecord + "\n" + truncated + "\n", "utf-8");
+
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) });
+    const all = await store.list();
+    // Should recover the valid record and skip the truncated one
+    expect(all.length).toBe(1);
+    expect(all[0]!.id).toBe("trunc1");
+  });
+
+  it("handles empty JSONL file", async () => {
+    const filePath = join(tmpdir(), `inj-empty-${Date.now()}.jsonl`);
+    await fsPromises.writeFile(filePath, "", "utf-8");
+
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) });
+    const all = await store.list();
+    expect(all.length).toBe(0);
+
+    // Store should still be usable
+    await store.add(makeItem({ id: "afterempty", text: "works" }));
+    expect((await store.list()).length).toBe(1);
+  });
+
+  it("handles JSONL file with only whitespace/empty lines", async () => {
+    const filePath = join(tmpdir(), `inj-ws-${Date.now()}.jsonl`);
+    await fsPromises.writeFile(filePath, "\n\n\n   \n\t\n\n", "utf-8");
+
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) });
+    const all = await store.list();
+    expect(all.length).toBe(0);
+  });
+
+  it("handles JSONL with valid JSON but missing item wrapper", async () => {
+    const filePath = join(tmpdir(), `inj-nowrap-${Date.now()}.jsonl`);
+    const lines = [
+      // Valid wrapped record
+      JSON.stringify({ item: { id: "wrapped", kind: "note", text: "correct format", createdAt: "2024-01-01T00:00:00Z" }, embedding: [] }),
+      // Valid JSON but no item wrapper (should be skipped)
+      JSON.stringify({ id: "unwrapped", kind: "note", text: "wrong format", createdAt: "2024-01-01T00:00:00Z" }),
+      // Array instead of object (should be skipped)
+      JSON.stringify([1, 2, 3]),
+      // Primitive (should be skipped)
+      JSON.stringify("just a string"),
+      // Null (should be skipped)
+      JSON.stringify(null),
+    ].join("\n") + "\n";
+
+    await fsPromises.writeFile(filePath, lines, "utf-8");
+    const store = new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) });
+    const all = await store.list();
+    expect(all.length).toBe(1);
+    expect(all[0]!.id).toBe("wrapped");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 20. Embedding information leakage
+// ---------------------------------------------------------------------------
+
+describe("Embedding information leakage", () => {
+  it("embedding vectors do not contain plaintext fragments", async () => {
+    const { store, filePath } = makeStore("-emb1");
+    const secretText = "password=MySuperSecret123!";
+    const redactor = new DefaultRedactor();
+    const { redactedText } = redactor.redact(secretText);
+    await store.add(makeItem({ id: "emb1", text: redactedText }));
+
+    // Read raw file and check the embedding
+    const raw = await fsPromises.readFile(filePath, "utf-8");
+    const record = JSON.parse(raw.trim());
+    const embedding = record.embedding as number[];
+
+    // Embeddings should be numbers only, no string content
+    expect(Array.isArray(embedding)).toBe(true);
+    for (const val of embedding) {
+      expect(typeof val).toBe("number");
+      expect(isFinite(val)).toBe(true);
+    }
+
+    // The raw file should not contain the secret
+    expect(raw).not.toContain("MySuperSecret123!");
+  });
+
+  it("different secrets produce different embeddings (no collision that leaks equivalence)", async () => {
+    const embedder = new HashEmbedder(64);
+    const emb1 = await embedder.embed("password=secret1");
+    const emb2 = await embedder.embed("password=secret2");
+
+    // Embeddings should be different (not identical)
+    let identical = true;
+    for (let i = 0; i < emb1.length; i++) {
+      if (emb1[i] !== emb2[i]) {
+        identical = false;
+        break;
+      }
+    }
+    expect(identical).toBe(false);
+  });
+
+  it("embedding search does not return raw embedding vectors to callers", async () => {
+    const { store } = makeStore("-emb2");
+    await store.add(makeItem({ id: "emb2", text: "test document for search" }));
+
+    const hits = await store.search("test document");
+    expect(hits.length).toBeGreaterThan(0);
+
+    // SearchHit only has item + score, no embedding
+    for (const hit of hits) {
+      expect(Object.keys(hit).sort()).toEqual(["item", "score"]);
+      expect((hit as Record<string, unknown>)["embedding"]).toBeUndefined();
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 21. Search score invariants under adversarial conditions
+// ---------------------------------------------------------------------------
+
+describe("Search score invariants", () => {
+  it("scores are always in [0, 1] even with empty queries", async () => {
+    const { store } = makeStore("-score1");
+    await store.add(makeItem({ id: "s1", text: "some content" }));
+    await store.add(makeItem({ id: "s2", text: "other content" }));
+
+    const queries = ["", " ", "\0", "\n", "\t"];
+    for (const q of queries) {
+      const hits = await store.search(q);
+      for (const hit of hits) {
+        expect(hit.score).toBeGreaterThanOrEqual(0);
+        expect(hit.score).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it("scores are always in [0, 1] for very long queries", async () => {
+    const { store } = makeStore("-score2");
+    await store.add(makeItem({ id: "s3", text: "target" }));
+
+    const longQuery = "word ".repeat(50_000);
+    const hits = await store.search(longQuery, { limit: 5 });
+    for (const hit of hits) {
+      expect(hit.score).toBeGreaterThanOrEqual(0);
+      expect(hit.score).toBeLessThanOrEqual(1);
+      expect(isFinite(hit.score)).toBe(true);
+    }
+  });
+
+  it("scores are NaN-free even with all-punctuation input", async () => {
+    const { store } = makeStore("-score3");
+    await store.add(makeItem({ id: "s4", text: "!!!@@@###$$$%%%^^^" }));
+
+    const hits = await store.search("!!!@@@###$$$%%%^^^");
+    for (const hit of hits) {
+      expect(isNaN(hit.score)).toBe(false);
+      expect(hit.score).toBeGreaterThanOrEqual(0);
+      expect(hit.score).toBeLessThanOrEqual(1);
+    }
+  });
+});
