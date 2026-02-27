@@ -141,7 +141,7 @@ describe("DefaultRedactor", () => {
   it("redacts AWS secret access keys in key=value format", () => {
     const r = new DefaultRedactor();
     // Construct at runtime to avoid triggering GitHub push protection
-    const fakeAwsSecret = "FAKE_AWS_SECRET_PREFIX/" + "K7MDENG/bPxRfiCYEXAMPLEKEY12";
+    const fakeAwsSecret = "fakeSecretKeyForTesting/" + "ExampleValueNotReal1234567890AB";
     const out = r.redact(`AWS_SECRET_ACCESS_KEY=${fakeAwsSecret}`);
     expect(out.hadSecrets).toBe(true);
     expect(out.redactedText).toContain("AWS_SECRET_ACCESS_KEY=[REDACTED]");
@@ -288,9 +288,9 @@ describe("DefaultRedactor", () => {
 
   it("redacts secrets embedded in multiline text", () => {
     const r = new DefaultRedactor();
-    const input = `line one
-AWS_ACCESS_KEY_ID=AKIA_EXAMPLE_REDACTED
-line three`;
+    // Construct at runtime to avoid triggering GitHub push protection
+    const fakeAwsKey = "AKIA" + "TEST0000FAKE0001";
+    const input = `line one\nAWS_ACCESS_KEY_ID=${fakeAwsKey}\nline three`;
     const out = r.redact(input);
     expect(out.hadSecrets).toBe(true);
     expect(out.redactedText).toContain("[REDACTED:AWS_ACCESS_KEY]");
@@ -448,7 +448,8 @@ describe("Redaction - injection and exfiltration resistance", () => {
   });
 
   it("catches secrets repeated across multiple lines", () => {
-    const key1 = "AKIA_EXAMPLE_REDACTED";
+    // Construct at runtime to avoid triggering GitHub push protection
+    const key1 = "AKIA" + "TEST0000FAKE0001";
     const key2 = "hf_" + "abcdefghijklmnopqrstuvwxyz1234";
     const multiline = `line1 ${key1}\nline2 normal\nline3 ${key2}`;
     const out = r.redact(multiline);
