@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { uuid } from "../src/index.js";
-import { expandHome, safeLimit } from "../src/utils.js";
+import { expandHome, safePath, safeLimit } from "../src/utils.js";
 import os from "node:os";
 import path from "node:path";
 
@@ -52,6 +52,55 @@ describe("expandHome", () => {
   it("returns empty string unchanged", () => {
     expect(expandHome("")).toBe("");
   });
+
+  it("expands ~\\ (backslash) on Windows-style paths", () => {
+    const result = expandHome("~\\documents");
+    expect(result).toBe(path.join(os.homedir(), "documents"));
+  });
+
+  it("does not expand ~ in the middle of a path", () => {
+    expect(expandHome("/home/~user")).toBe("/home/~user");
+  });
+});
+
+describe("safePath", () => {
+  it("resolves a path inside the home directory", () => {
+    const p = path.join(os.homedir(), "openclaw", "data.jsonl");
+    const result = safePath(p);
+    expect(result).toBe(path.resolve(p));
+  });
+
+  it("rejects a path outside the home directory", () => {
+    // Use /tmp on Unix or the drive root on Windows - both outside home
+    const outside = process.platform === "win32" ? "C:\\Windows\\Temp\\evil" : "/tmp/evil";
+    expect(() => safePath(outside)).toThrow(/must be inside the home directory/);
+  });
+
+  it("rejects path traversal attacks (../ escaping home)", () => {
+    const traversal = path.join(os.homedir(), "..", "etc", "passwd");
+    expect(() => safePath(traversal)).toThrow(/must be inside the home directory/);
+  });
+
+  it("uses the provided label in the error message", () => {
+    const outside = process.platform === "win32" ? "C:\\Windows\\Temp" : "/tmp";
+    expect(() => safePath(outside, "myLabel")).toThrow(/myLabel/);
+  });
+
+  it("accepts the home directory itself", () => {
+    const result = safePath(os.homedir());
+    expect(result).toBe(os.homedir());
+  });
+
+  it("resolves relative paths against cwd (which may or may not be in home)", () => {
+    const resolved = path.resolve("relative/subdir");
+    const home = os.homedir();
+    const normalize = (s: string) => process.platform === "win32" ? s.toLowerCase() : s;
+    if (normalize(resolved).startsWith(normalize(home))) {
+      expect(safePath("relative/subdir")).toBe(resolved);
+    } else {
+      expect(() => safePath("relative/subdir")).toThrow(/must be inside the home directory/);
+    }
+  });
 });
 
 describe("safeLimit", () => {
@@ -80,5 +129,28 @@ describe("safeLimit", () => {
 
   it("accepts string-encoded numbers", () => {
     expect(safeLimit("42", 10, 100)).toBe(42);
+  });
+
+  it("returns default for Infinity", () => {
+    expect(safeLimit(Infinity, 10, 100)).toBe(100);
+  });
+
+  it("returns default for -Infinity", () => {
+    expect(safeLimit(-Infinity, 10, 100)).toBe(10);
+  });
+
+  it("returns 1 when value is 1 (boundary)", () => {
+    expect(safeLimit(1, 10, 100)).toBe(1);
+  });
+
+  it("returns max when value equals max", () => {
+    expect(safeLimit(100, 10, 100)).toBe(100);
+  });
+
+  it("handles boolean inputs (treated as 0/1)", () => {
+    // true => Number(true) = 1, which is >= 1, so return 1
+    expect(safeLimit(true, 10, 100)).toBe(1);
+    // false => Number(false) = 0, which is < 1, so return default
+    expect(safeLimit(false, 10, 100)).toBe(10);
   });
 });

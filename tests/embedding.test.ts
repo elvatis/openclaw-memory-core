@@ -81,6 +81,46 @@ describe("HashEmbedder", () => {
     const simUnrelated = cosine(base, unrelated);
     expect(simRelated).toBeGreaterThan(simUnrelated);
   });
+
+  it("works with dim=1 (minimal dimension)", async () => {
+    const embedder = new HashEmbedder(1);
+    const vec = await embedder.embed("hello");
+    expect(vec.length).toBe(1);
+    // With only one bucket, the magnitude should be 1 or 0
+    expect(Math.abs(vec[0]!)).toBeCloseTo(1.0, 5);
+  });
+
+  it("handles numeric-only tokens", async () => {
+    const embedder = new HashEmbedder(64);
+    const vec = await embedder.embed("123 456 789");
+    const magnitude = Math.sqrt(vec.reduce((s, x) => s + x * x, 0));
+    expect(magnitude).toBeCloseTo(1.0, 5);
+  });
+
+  it("handles text with excessive whitespace", async () => {
+    const embedder = new HashEmbedder(64);
+    const a = await embedder.embed("hello   world");
+    const b = await embedder.embed("hello world");
+    // Whitespace variations should produce the same embedding
+    expect(a).toEqual(b);
+  });
+
+  it("handles single-character token", async () => {
+    const embedder = new HashEmbedder(64);
+    const vec = await embedder.embed("a");
+    expect(vec.length).toBe(64);
+    const magnitude = Math.sqrt(vec.reduce((s, x) => s + x * x, 0));
+    expect(magnitude).toBeCloseTo(1.0, 5);
+  });
+
+  it("handles very long input without error", async () => {
+    const embedder = new HashEmbedder(64);
+    const longText = Array.from({ length: 10000 }, (_, i) => `word${i}`).join(" ");
+    const vec = await embedder.embed(longText);
+    expect(vec.length).toBe(64);
+    const magnitude = Math.sqrt(vec.reduce((s, x) => s + x * x, 0));
+    expect(magnitude).toBeCloseTo(1.0, 5);
+  });
 });
 
 describe("cosine", () => {
@@ -112,5 +152,21 @@ describe("cosine", () => {
     const a = [0, 0, 0];
     const b = [0, 0, 0];
     expect(cosine(a, b)).toBe(0);
+  });
+
+  it("handles single-element vectors", () => {
+    expect(cosine([3], [4])).toBe(12);
+    expect(cosine([-1], [1])).toBe(-1);
+  });
+
+  it("computes correct dot product for non-unit vectors", () => {
+    const a = [2, 0];
+    const b = [3, 0];
+    // cosine here computes raw dot product (no normalization in the function)
+    expect(cosine(a, b)).toBe(6);
+  });
+
+  it("handles empty vectors", () => {
+    expect(cosine([], [])).toBe(0);
   });
 });
