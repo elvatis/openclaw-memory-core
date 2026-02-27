@@ -159,6 +159,7 @@ interface EmbedderOptions {
 ```ts
 interface MemoryStore {
   add(item: MemoryItem): Promise<void>;
+  addMany(items: MemoryItem[]): Promise<void>;
   get(id: string): Promise<MemoryItem | undefined>;
   update(id: string, partial: Partial<Omit<MemoryItem, "id">>): Promise<MemoryItem | undefined>;
   delete(id: string): Promise<boolean>;
@@ -190,7 +191,8 @@ const store = new JsonlMemoryStore({
 
 | Method | Description |
 |--------|-------------|
-| `add(item)` | Store a new memory item. Throws `TypeError` if `kind` is invalid. |
+| `add(item)` | Store a new memory item. Uses append-optimized writes when under capacity (no full rewrite). Throws `TypeError` if `kind` is invalid. |
+| `addMany(items)` | Store multiple items in a single operation. Embeddings are computed in parallel, and all items are appended in one write. More efficient than calling `add()` in a loop. Throws `TypeError` if any item has an invalid `kind`. No-op for empty arrays. |
 | `get(id)` | Retrieve an item by ID. Returns `undefined` if not found or expired. |
 | `update(id, partial)` | Merge partial fields into an existing item. Re-embeds automatically when `text` changes. Returns the updated item or `undefined`. |
 | `delete(id)` | Remove an item. Returns `true` if it existed. |
@@ -237,6 +239,28 @@ console.log(hits[0]?.score); // ~0.85
 // Delete
 const deleted = await store.delete(id);
 console.log(deleted); // true
+```
+
+**Example - bulk insert with `addMany()`:**
+
+```ts
+import { JsonlMemoryStore, createEmbedder, uuid } from "@elvatis_com/openclaw-memory-core";
+
+const store = new JsonlMemoryStore({
+  filePath: "./data/memories.jsonl",
+  embedder: createEmbedder(),
+});
+
+// Insert many items in one efficient operation
+await store.addMany([
+  { id: uuid(), kind: "fact", text: "Node 22 is LTS", createdAt: new Date().toISOString() },
+  { id: uuid(), kind: "fact", text: "Bun supports workspaces", createdAt: new Date().toISOString() },
+  { id: uuid(), kind: "doc", text: "Vitest v2 migration guide", createdAt: new Date().toISOString(), tags: ["testing"] },
+]);
+
+// All items are immediately searchable
+const hits = await store.search("Vitest migration");
+console.log(hits[0]?.item.text); // "Vitest v2 migration guide"
 ```
 
 #### `DefaultRedactor`

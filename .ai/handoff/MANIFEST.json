@@ -3,11 +3,11 @@
   "project": "openclaw-memory-core",
   "last_session": {
     "agent": "claude-code",
-    "session_id": "t007-readme-api-reference-2026-02-27",
-    "timestamp": "2026-02-27T08:01:12.610Z",
+    "session_id": "t008-addmany-bulk-operations-2026-02-27",
+    "timestamp": "2026-02-27T09:03:00.000Z",
     "commit": "pending",
     "phase": "implementing",
-    "duration_minutes": 2
+    "duration_minutes": 3
   },
   "files": {
     "STATUS.md": {
@@ -39,7 +39,7 @@
       "summary": "Standard AAHP agent workflow."
     }
   },
-  "quick_context": "T-007 done: README rewritten with full API reference. Covers all types (MemoryItem, SearchHit, Embedder, etc.), classes (JsonlMemoryStore, DefaultRedactor, HashEmbedder), functions (createEmbedder, cosine, uuid, ttlMs, expandHome, safePath, safeLimit), TTL/expiry, plugin API types, custom embedder example, and development commands. Build and tests passing (243/243). No blockers.",
+  "quick_context": "T-008 done: addMany() bulk operations documented in README. Implementation and tests already existed from prior sessions. README updated with addMany in MemoryStore interface, JsonlMemoryStore methods table, and bulk insert example. Build and tests passing (254/254). All v0.2 roadmap tasks complete.",
   "next_task_id": 9,
   "tasks": {
     "T-001": {
@@ -103,11 +103,12 @@
     },
     "T-008": {
       "title": "Add bulk operations and append-optimized writes (addMany)",
-      "status": "ready",
+      "status": "done",
       "priority": "low",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
-      "github_issue": "https://github.com/homeofe/openclaw-memory-core/issues/8"
+      "github_issue": "https://github.com/homeofe/openclaw-memory-core/issues/8",
+      "completed": "2026-02-27T09:03:00.000Z"
     }
   }
 }
