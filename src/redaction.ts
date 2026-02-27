@@ -34,7 +34,7 @@ const RULES: Rule[] = [
   { id: "slack_token", re: /\bxox[baprs]-[A-Za-z0-9\-]{10,}\b/g, replaceWith: "[REDACTED:SLACK_TOKEN]" },
   // SendGrid API keys
   { id: "sendgrid_api_key", re: /\bSG\.[A-Za-z0-9\-_]{20,}\.[A-Za-z0-9\-_]{20,}\b/g, replaceWith: "[REDACTED:SENDGRID_KEY]" },
-  // Twilio account SIDs (prefixed AC + 32 hex chars — specific enough to avoid false positives)
+  // Twilio account SIDs (prefixed AC + 32 hex chars - specific enough to avoid false positives)
   { id: "twilio_sid", re: /\bAC[0-9a-f]{32}\b/g, replaceWith: "[REDACTED:TWILIO_SID]" },
   // Generic password in common config patterns (key=value / key: value)
   { id: "generic_password", re: /\b(?:password|passwd|secret)\s*[:=]\s*['"]?[^\s'"]{8,}['"]?/gi, replaceWith: "password=[REDACTED]" },
@@ -54,7 +54,7 @@ export class DefaultRedactor implements Redactor {
     for (const rule of RULES) {
       const found = out.match(rule.re);
       if (found && found.length > 0) {
-        // Store only rule id + count — never the actual matched text.
+        // Store only rule id + count - never the actual matched text.
         matches.push({ rule: rule.id, count: found.length });
         out = out.replace(rule.re, rule.replaceWith);
       }

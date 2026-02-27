@@ -163,7 +163,7 @@ export class JsonlMemoryStore implements MemoryStore {
       this._cache = out;
       return out;
     } catch (err: unknown) {
-      // Only suppress "file not found" — rethrow real I/O errors.
+      // Only suppress "file not found" - rethrow real I/O errors.
       if ((err as NodeJS.ErrnoException).code === "ENOENT") {
         this._cache = [];
         return [];
