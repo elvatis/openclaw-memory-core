@@ -3,11 +3,11 @@
   "project": "openclaw-memory-core",
   "last_session": {
     "agent": "claude-code",
-    "session_id": "t004-injection-tests-hardening-2026-02-27",
-    "timestamp": "2026-02-27T04:09:07.323Z",
+    "session_id": "t005-ttl-expiry-support-2026-02-27",
+    "timestamp": "2026-02-27T08:44:00.000Z",
     "commit": "pending",
     "phase": "implementing",
-    "duration_minutes": 2
+    "duration_minutes": 5
   },
   "files": {
     "STATUS.md": {
@@ -39,8 +39,8 @@
       "summary": "Standard AAHP agent workflow."
     }
   },
-  "quick_context": "T-004 hardened: injection/exfiltration test suite expanded from 67 to 91 tests across 21 categories. New vectors: deserialization prototype pollution, store isolation, adversarial IDs, error recovery consistency, file truncation recovery, embedding leakage, search score invariants. Build and tests passing (200/200). All high-priority tasks done. No blockers.",
-  "next_task_id": 5,
+  "quick_context": "T-005 done: TTL/expiry support added to memory items. MemoryItem.expiresAt field, lazy filtering in get/list/search, purgeExpired(), ttlMs() utility. 24 new tests. Build and tests passing (224/224). All high-priority tasks done. No blockers.",
+  "next_task_id": 9,
   "tasks": {
     "T-001": {
       "title": "Define v0.2 roadmap items as issues and prioritize",
@@ -76,10 +76,11 @@
     },
     "T-005": {
       "title": "Add TTL/expiry support for memory items",
-      "status": "ready",
+      "status": "done",
       "priority": "high",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
+      "completed": "2026-02-27T08:50:00.000Z",
       "github_issue": "https://github.com/homeofe/openclaw-memory-core/issues/5"
     },
     "T-006": {

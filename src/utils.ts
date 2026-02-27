@@ -32,3 +32,8 @@ export function safeLimit(val: unknown, dflt: number, max: number): number {
   const n = Math.trunc(Number(val));
   return isNaN(n) || n < 1 ? dflt : Math.min(n, max);
 }
+
+/** Return an ISO 8601 timestamp `ms` milliseconds from now. Useful for setting MemoryItem.expiresAt. */
+export function ttlMs(ms: number): string {
+  return new Date(Date.now() + ms).toISOString();
+}

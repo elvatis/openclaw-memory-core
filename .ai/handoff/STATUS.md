@@ -1,6 +1,6 @@
 # openclaw-memory-core: Current State of the Nation
 
-> Last updated: 2026-02-27 by Claude Opus 4.6 (T-004: injection/exfiltration test suite)
+> Last updated: 2026-02-27 by Claude Opus 4.6 (T-005: TTL/expiry support)
 > Commit: pending
 >
 > **Rule:** This file is rewritten (not appended) at the end of every session.
@@ -13,7 +13,7 @@
 | Check | Result | Notes |
 |-------|--------|-------|
 | `build` | OK (verified) | tsc compiles cleanly |
-| `test` | OK (verified) | 200/200 tests pass (vitest) |
+| `test` | OK (verified) | 224/224 tests pass (vitest) |
 | `lint` | N/A | No linter configured yet |
 | `type-check` | OK (verified) | Strict mode, no errors |
 
@@ -33,7 +33,7 @@
 
 | Component | Version | State | Notes |
 |-----------|---------|-------|-------|
-| openclaw-memory-core | 0.1.0 | Stable | Core utilities: redaction, local store, embeddings |
+| openclaw-memory-core | 0.1.0 | Stable | Core utilities: redaction, local store, embeddings, TTL/expiry |
 
 ---
 
@@ -43,8 +43,8 @@
 
 | Priority | Count | Issues |
 |----------|-------|--------|
-| High | 3 | #3 (injection tests), #4 (update method), #6 (test coverage) |
-| Medium | 4 | #1 (embeddings backend), #2 (secret scanner), #5 (TTL/expiry), #7 (API docs) |
+| High | 3 | #3 (injection tests), #4 (update method), #6 (test coverage) - ALL DONE |
+| Medium | 4 | #1 (embeddings backend), #2 (secret scanner), #5 (TTL/expiry - DONE), #7 (API docs) |
 | Low | 1 | #8 (bulk operations) |
 
 ---
@@ -53,11 +53,11 @@
 
 | Gap | Severity | Description |
 |-----|----------|-------------|
-| Test coverage gaps | RESOLVED | 200 tests across 5 suites; injection/exfiltration (91 tests, 21 categories), safePath, embedding, redaction all covered (issues #3, #6) |
+| Test coverage gaps | RESOLVED | 224 tests across 6 suites (issues #3, #6) |
 | update() method | RESOLVED | update() method implemented and tested (issue #4) |
-| TTL/expiry | MEDIUM | No automatic memory expiration (issue #5) |
+| TTL/expiry | RESOLVED | expiresAt field, lazy filtering, purgeExpired(), ttlMs() utility (issue #5) |
 | CI pipeline | MEDIUM | No GitHub Actions workflow (issue #2) |
-| API documentation | MEDIUM | README is minimal, no API reference (issue #7) |
+| API documentation | MEDIUM | README has TTL section; still needs full API reference (issue #7) |
 | Bulk operations | LOW | No batch add/delete, full rewrite on every add (issue #8) |
 
 ---
@@ -66,6 +66,7 @@
 
 | Item | Resolution |
 |------|-----------|
+| T-005 TTL/expiry support | Completed 2026-02-27 - expiresAt on MemoryItem, lazy filtering in get/list/search, purgeExpired(), ttlMs(), 24 tests |
 | T-004 injection/exfiltration suite | Hardened 2026-02-27 - 91 injection tests across 21 categories; 200 total tests |
 | T-003 update() method | Completed 2026-02-27 - update() in interface, store, and 8 tests |
 | T-002 test coverage expansion | Completed 2026-02-27 - 109 tests (up from 15); safePath, embedding, redaction edge cases |

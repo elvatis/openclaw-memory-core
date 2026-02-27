@@ -6,6 +6,35 @@
 
 ---
 
+## 2026-02-27: T-005 TTL/expiry support for memory items
+
+**Agent:** Claude Opus 4.6
+**Phase:** Implementation
+
+### What was done
+
+- Added `expiresAt?: string` (ISO 8601) field to `MemoryItem` interface
+- Added `ListOpts` interface with `includeExpired` option
+- Added `includeExpired` option to `SearchOpts`
+- Added `purgeExpired(): Promise<number>` to `MemoryStore` interface and `JsonlMemoryStore`
+- Updated `get()` to filter expired items (returns undefined for expired)
+- Updated `list()` and `search()` to skip expired items by default
+- Added `isExpired()` helper using ISO string comparison (no Date parsing overhead)
+- Added `ttlMs(ms)` utility in utils.ts for convenient expiry calculation
+- Created `tests/ttl.test.ts` with 24 tests covering: get, list, search, purgeExpired, update interaction, ttlMs utility, and edge cases
+- Updated README.md with TTL documentation and usage example
+- All 224 tests pass, build clean
+
+### Decisions made
+
+- Lazy expiry (filter at read time) rather than background timers - fits library-first architecture
+- `update()` can find expired items (so callers can extend expiry) but `get()` cannot
+- ISO string comparison (`<=`) for expiry check - avoids Date parsing, works correctly for ISO 8601
+- `purgeExpired()` is explicit (caller decides when to clean up) - no automatic pruning
+- `expiresAt` exactly equal to now is treated as expired (consistent with "past or equal" semantics)
+
+---
+
 ## 2026-02-27: v0.2 roadmap definition
 
 **Agent:** Claude Opus 4.6
