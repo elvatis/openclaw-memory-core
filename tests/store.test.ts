@@ -1,12 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import fsPromises from "node:fs/promises";
 import { HashEmbedder } from "../src/embedding.js";
 import { JsonlMemoryStore } from "../src/store-jsonl.js";
+import type { MemoryItem } from "../src/types.js";
 
 function makeStore(suffix = "") {
   const filePath = join(tmpdir(), `mem-${Date.now()}${suffix}.jsonl`);
-  return new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) });
+  return { store: new JsonlMemoryStore({ filePath, embedder: new HashEmbedder(64) }), filePath };
+}
+
+function makeItem(id: string, overrides: Partial<MemoryItem> = {}): MemoryItem {
+  return { id, kind: "note", text: `text for ${id}`, createdAt: new Date().toISOString(), ...overrides };
 }
 
 describe("JsonlMemoryStore", () => {

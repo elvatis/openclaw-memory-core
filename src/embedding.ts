@@ -29,6 +29,23 @@ export class HashEmbedder implements Embedder {
   }
 }
 
+/**
+ * Factory that returns an Embedder. Pass `{ custom: myEmbedder }` to use a
+ * real semantic backend, or omit it to get the default HashEmbedder.
+ *
+ * ```ts
+ * // Default (local, deterministic)
+ * const embedder = createEmbedder();
+ *
+ * // Custom provider
+ * const embedder = createEmbedder({ custom: myOpenAIEmbedder });
+ * ```
+ */
+export function createEmbedder(opts?: EmbedderOptions): Embedder {
+  if (opts?.custom) return opts.custom;
+  return new HashEmbedder(opts?.dims);
+}
+
 export function cosine(a: number[], b: number[]): number {
   const n = Math.min(a.length, b.length);
   let dot = 0;

@@ -10,10 +10,14 @@
       "default": "./dist/index.js"
     }
   },
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
     "scan-secrets": "bash scripts/scan-secrets.sh",
     "ci": "npm run typecheck && npm run build && npm run test && npm run scan-secrets",
     "prepublishOnly": "npm run build"

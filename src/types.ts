@@ -40,6 +40,8 @@ export interface ListOpts {
 
 export interface MemoryStore {
   add(item: MemoryItem): Promise<void>;
+  /** Add multiple items in a single operation. More efficient than calling add() in a loop. */
+  addMany(items: MemoryItem[]): Promise<void>;
   get(id: string): Promise<MemoryItem | undefined>;
   /** Update an existing item by merging partial fields. Returns the updated item, or undefined if not found. */
   update(id: string, partial: Partial<Omit<MemoryItem, "id">>): Promise<MemoryItem | undefined>;

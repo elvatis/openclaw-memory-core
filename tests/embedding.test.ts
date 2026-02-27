@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { HashEmbedder, cosine } from "../src/embedding.js";
+import { HashEmbedder, cosine, createEmbedder } from "../src/embedding.js";
+import type { Embedder } from "../src/types.js";
 
 describe("HashEmbedder", () => {
   it("produces a vector with the configured number of dimensions", async () => {
@@ -168,5 +169,59 @@ describe("cosine", () => {
 
   it("handles empty vectors", () => {
     expect(cosine([], [])).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createEmbedder() factory (issue #1 - provider pattern)
+// ---------------------------------------------------------------------------
+describe("createEmbedder", () => {
+  it("returns a HashEmbedder by default", () => {
+    const embedder = createEmbedder();
+    expect(embedder).toBeInstanceOf(HashEmbedder);
+    expect(embedder.id).toBe("hash-embedder-v1");
+    expect(embedder.dims).toBe(256);
+  });
+
+  it("respects custom dims for the default HashEmbedder", () => {
+    const embedder = createEmbedder({ dims: 128 });
+    expect(embedder).toBeInstanceOf(HashEmbedder);
+    expect(embedder.dims).toBe(128);
+  });
+
+  it("returns a custom embedder when provided", async () => {
+    const custom: Embedder = {
+      id: "mock-embedder",
+      dims: 3,
+      async embed(_text: string) {
+        return [0.1, 0.2, 0.3];
+      },
+    };
+    const embedder = createEmbedder({ custom });
+    expect(embedder).toBe(custom);
+    expect(embedder.id).toBe("mock-embedder");
+    expect(embedder.dims).toBe(3);
+    const vec = await embedder.embed("anything");
+    expect(vec).toEqual([0.1, 0.2, 0.3]);
+  });
+
+  it("ignores dims when a custom embedder is provided", () => {
+    const custom: Embedder = {
+      id: "custom",
+      dims: 42,
+      async embed() { return new Array(42).fill(0); },
+    };
+    const embedder = createEmbedder({ custom, dims: 999 });
+    expect(embedder.dims).toBe(42);
+    expect(embedder).toBe(custom);
+  });
+
+  it("returned embedder satisfies the Embedder interface", async () => {
+    const embedder = createEmbedder();
+    expect(typeof embedder.id).toBe("string");
+    expect(typeof embedder.dims).toBe("number");
+    const vec = await embedder.embed("test");
+    expect(Array.isArray(vec)).toBe(true);
+    expect(vec.length).toBe(embedder.dims);
   });
 });

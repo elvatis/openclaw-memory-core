@@ -65,8 +65,40 @@ export class JsonlMemoryStore implements MemoryStore {
       const line: RecordLine = { item, embedding };
       const records = await this._readAll();
       records.push(line);
-      const trimmed = records.length > this.maxItems ? records.slice(records.length - this.maxItems) : records;
-      await this._writeAll(trimmed);
+      if (records.length > this.maxItems) {
+        // Over capacity - must rewrite the whole file to trim old entries.
+        const trimmed = records.slice(records.length - this.maxItems);
+        await this._writeAll(trimmed);
+      } else {
+        // Under capacity - append a single line instead of rewriting everything.
+        await this._appendLines([line]);
+      }
+    });
+  }
+
+  async addMany(items: MemoryItem[]): Promise<void> {
+    if (items.length === 0) return;
+    for (const it of items) {
+      if (!VALID_KINDS.has(it.kind)) {
+        throw new TypeError(`[JsonlMemoryStore] Invalid kind "${it.kind}". Expected one of: ${[...VALID_KINDS].join(", ")}`);
+      }
+    }
+    return this._enqueue(async () => {
+      const newRecords: RecordLine[] = await Promise.all(
+        items.map(async (it) => {
+          const embedding = await this.embedder.embed(it.text);
+          return { item: it, embedding } as RecordLine;
+        })
+      );
+      const records = await this._readAll();
+      records.push(...newRecords);
+      if (records.length > this.maxItems) {
+        const trimmed = records.slice(records.length - this.maxItems);
+        await this._writeAll(trimmed);
+      } else {
+        // Append all new lines in a single write - no full rewrite needed.
+        await this._appendLines(newRecords);
+      }
     });
   }
 
@@ -192,7 +224,14 @@ export class JsonlMemoryStore implements MemoryStore {
     }
   }
 
-  /** Atomically write records to the JSONL file (tmp → rename), then refresh cache. */
+  /** Append one or more JSONL lines to the file without rewriting the whole thing. */
+  private async _appendLines(lines: RecordLine[]): Promise<void> {
+    const data = lines.map((r) => JSON.stringify(r)).join("\n") + "\n";
+    await fsPromises.appendFile(this.filePath, data, "utf-8");
+    // Cache is already up-to-date because the caller pushed into _readAll()'s array.
+  }
+
+  /** Atomically write records to the JSONL file (tmp -> rename), then refresh cache. */
   private async _writeAll(records: RecordLine[]): Promise<void> {
     const dir = path.dirname(this.filePath);
     const tmp = path.join(dir, `.${path.basename(this.filePath)}.tmp`);

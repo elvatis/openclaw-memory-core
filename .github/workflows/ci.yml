@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build-and-test:
-    name: Build & Test
+    name: Lint, Build & Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,8 +28,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type-check
-        run: npx tsc --noEmit
+      - name: Lint (type-check)
+        run: npm run lint
 
       - name: Build
         run: npm run build
@@ -50,3 +50,7 @@ jobs:
         env:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Grep-based secret scan (fallback)
+        run: bash scripts/scan-secrets.sh
