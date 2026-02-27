@@ -6,6 +6,42 @@
 
 ---
 
+## 2026-02-27: T-006 Secret scanner and CI guardrails
+
+**Agent:** Claude Opus 4.6
+**Phase:** Implementation
+
+### What was done
+
+- Created `.github/workflows/ci.yml` - GitHub Actions CI workflow:
+  - Build & Test job with Node.js 18/20/22 matrix (npm ci, tsc --noEmit, build, test)
+  - Secret Scan job using gitleaks/gitleaks-action@v2
+  - Triggers on push to main and PRs to main
+  - Read-only permissions
+- Created `.gitleaks.toml` - gitleaks configuration:
+  - Extends default gitleaks ruleset
+  - Allowlists: node_modules, dist, package-lock.json, .ai, tests (fake secrets in test files)
+- Created `scripts/scan-secrets.sh` - local secret scanning:
+  - Prefers gitleaks if installed, falls back to built-in grep patterns
+  - Patterns: AWS keys, generic secret assignments, private keys, GitHub/npm tokens, long hex secrets
+  - Excludes test directory (intentional fake secrets for redaction/injection testing)
+- Updated `package.json` with new scripts:
+  - `typecheck` - tsc --noEmit
+  - `scan-secrets` - runs the local scanner
+  - `ci` - full pipeline: typecheck + build + test + scan-secrets
+- All 224 tests pass, build clean, secret scan clean
+
+### Decisions made
+
+- Used gitleaks as the primary scanner (industry standard, free for public repos via GitHub Action)
+- Built-in fallback scanner for local dev without gitleaks installed
+- Excluded tests/ from scanning - test files intentionally contain fake AWS keys, tokens, etc. for redaction/injection testing
+- Node.js matrix covers 18 (LTS), 20 (LTS), 22 (current) for broad compatibility
+- CI runs on push to main and PRs - catches issues before merge
+- Added `npm run ci` as single command for local pre-push validation
+
+---
+
 ## 2026-02-27: T-005 TTL/expiry support for memory items
 
 **Agent:** Claude Opus 4.6
