@@ -1,7 +1,7 @@
 # openclaw-memory-core: Current State of the Nation
 
-> Last updated: 2026-02-24 by Human (initial scaffold)
-> Commit: -
+> Last updated: 2026-02-27 by Claude Opus 4.6 (v0.2 roadmap definition)
+> Commit: pending
 >
 > **Rule:** This file is rewritten (not appended) at the end of every session.
 > It reflects the *current* reality, not history. History lives in LOG.md.
@@ -12,10 +12,10 @@
 
 | Check | Result | Notes |
 |-------|--------|-------|
-| `build` | Unknown | Not yet verified |
-| `test` | Unknown | Not yet verified |
-| `lint` | Unknown | Not yet verified |
-| `type-check` | Unknown | Not yet verified |
+| `build` | OK (verified) | tsc compiles cleanly |
+| `test` | OK (verified) | 15/15 tests pass (vitest) |
+| `lint` | N/A | No linter configured yet |
+| `type-check` | OK (verified) | Strict mode, no errors |
 
 ---
 
@@ -23,7 +23,9 @@
 
 | Component | Location | State |
 |-----------|----------|-------|
-| Local dev | `npm run build` + `npm run test` | Unknown |
+| Local dev | `npm run build` + `npm run test` | OK (verified 2026-02-27) |
+| GitHub repo | homeofe/openclaw-memory-core | Active |
+| CI pipeline | Not yet configured | See issue #2 |
 
 ---
 
@@ -31,7 +33,19 @@
 
 | Component | Version | State | Notes |
 |-----------|---------|-------|-------|
-| openclaw-memory-core | 0.1.0 | Unknown | Core utilities: redaction, local store, embeddings |
+| openclaw-memory-core | 0.1.0 | Stable | Core utilities: redaction, local store, embeddings |
+
+---
+
+## v0.2 Roadmap Summary
+
+8 issues defined and prioritized on GitHub. See DASHBOARD.md for full list and suggested implementation order.
+
+| Priority | Count | Issues |
+|----------|-------|--------|
+| High | 3 | #3 (injection tests), #4 (update method), #6 (test coverage) |
+| Medium | 4 | #1 (embeddings backend), #2 (secret scanner), #5 (TTL/expiry), #7 (API docs) |
+| Low | 1 | #8 (bulk operations) |
 
 ---
 
@@ -39,7 +53,12 @@
 
 | Gap | Severity | Description |
 |-----|----------|-------------|
-| v0.2 roadmap | MEDIUM | Not yet defined or prioritized |
+| Test coverage gaps | HIGH | No tests for embedding.ts or utils.ts; 12 redaction rules untested (issue #6) |
+| update() method | HIGH | MemoryStore has no update operation (issue #4) |
+| TTL/expiry | MEDIUM | No automatic memory expiration (issue #5) |
+| CI pipeline | MEDIUM | No GitHub Actions workflow (issue #2) |
+| API documentation | MEDIUM | README is minimal, no API reference (issue #7) |
+| Bulk operations | LOW | No batch add/delete, full rewrite on every add (issue #8) |
 
 ---
 
@@ -47,6 +66,7 @@
 
 | Item | Resolution |
 |------|-----------|
+| v0.2 roadmap definition | Completed 2026-02-27 - 5 new issues created (#4-#8), 3 existing issues labeled (#1-#3) |
 | Initial scaffold | Created 2026-02-24 |
 
 ---
@@ -56,4 +76,3 @@
 - **(Verified)**: confirmed by running code/tests
 - **(Assumed)**: derived from docs/config, not directly tested
 - **(Unknown)**: needs verification
-

@@ -1,0 +1,34 @@
+import path from "node:path";
+import os from "node:os";
+
+/** Expand leading `~` to the user's home directory. */
+export function expandHome(p: string): string {
+  if (!p) return p;
+  if (p === "~") return os.homedir();
+  if (p.startsWith("~/") || p.startsWith("~\\")) return path.join(os.homedir(), p.slice(2));
+  return p;
+}
+
+/**
+ * Resolve a path and ensure it stays inside the user's home directory.
+ * Throws if the resolved path would escape home (path traversal guard).
+ * Uses case-insensitive comparison on Windows.
+ */
+export function safePath(p: string, label = "storePath"): string {
+  const resolved = path.resolve(p);
+  const home = os.homedir();
+  // On Windows paths are case-insensitive; normalise both sides before comparing.
+  const normalize = (s: string) => process.platform === "win32" ? s.toLowerCase() : s;
+  const rn = normalize(resolved);
+  const hn = normalize(home);
+  if (!rn.startsWith(hn + path.sep) && rn !== hn) {
+    throw new Error(`[openclaw] ${label} must be inside the home directory. Got: ${resolved}`);
+  }
+  return resolved;
+}
+
+/** Clamp an untrusted number to [1, max], returning dflt when invalid. */
+export function safeLimit(val: unknown, dflt: number, max: number): number {
+  const n = Math.trunc(Number(val));
+  return isNaN(n) || n < 1 ? dflt : Math.min(n, max);
+}
