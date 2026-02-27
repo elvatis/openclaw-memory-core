@@ -29,6 +29,8 @@ export interface SearchOpts {
 export interface MemoryStore {
   add(item: MemoryItem): Promise<void>;
   get(id: string): Promise<MemoryItem | undefined>;
+  /** Update an existing item by merging partial fields. Returns the updated item, or undefined if not found. */
+  update(id: string, partial: Partial<Omit<MemoryItem, "id">>): Promise<MemoryItem | undefined>;
   delete(id: string): Promise<boolean>;
   search(query: string, opts?: SearchOpts): Promise<SearchHit[]>;
   list(opts?: { limit?: number; kind?: MemoryKind; tags?: string[] }): Promise<MemoryItem[]>;

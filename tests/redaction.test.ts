@@ -58,4 +58,190 @@ describe("DefaultRedactor", () => {
     expect(out.hadSecrets).toBe(false);
     expect(out.redactedText).toBe("Hello world, this is a normal message.");
   });
+
+  // --- Additional coverage for patterns not previously tested ---
+
+  it("redacts OpenAI API keys (classic sk-...)", () => {
+    const r = new DefaultRedactor();
+    // Construct at runtime to avoid GitHub push protection
+    const fakeKey = "sk-" + "abcdefghijklmnopqrstuvwxyz1234567890";
+    const out = r.redact(`OPENAI_API_KEY=${fakeKey}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:OPENAI_KEY]");
+    expect(out.matches.find((m) => m.rule === "openai_api_key")).toBeDefined();
+  });
+
+  it("redacts OpenAI project keys (sk-proj-...)", () => {
+    const r = new DefaultRedactor();
+    const fakeKey = "sk-proj-" + "abcdefghijklmnopqrstuvwxyz1234567890";
+    const out = r.redact(`key=${fakeKey}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:OPENAI_KEY]");
+  });
+
+  it("redacts Anthropic API keys", () => {
+    const r = new DefaultRedactor();
+    const fakeKey = ["sk-ant-api03", "abcdefghijklmnopqrstuvwxyz1234567890"].join("-");
+    const out = r.redact(`ANTHROPIC_API_KEY=${fakeKey}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:ANTHROPIC_KEY]");
+  });
+
+  it("redacts Stripe live keys", () => {
+    const r = new DefaultRedactor();
+    // Construct at runtime to avoid GitHub push protection
+    const fakeKey = ["sk", "live", "abcdefghijklmnopqrstuvwxyz1234567890"].join("_");
+    const out = r.redact(`STRIPE_KEY=${fakeKey}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:STRIPE_KEY]");
+  });
+
+  it("redacts Stripe test keys", () => {
+    const r = new DefaultRedactor();
+    // Construct at runtime to avoid GitHub push protection
+    const fakeKey = ["sk", "test", "abcdefghijklmnopqrstuvwxyz1234567890"].join("_");
+    const out = r.redact(`STRIPE_KEY=${fakeKey}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:STRIPE_KEY]");
+  });
+
+  it("redacts GitHub PATs", () => {
+    const r = new DefaultRedactor();
+    // Construct at runtime to avoid GitHub push protection
+    const fakeToken = "github_pat_" + "abcdefghijklmnopqrstuvwxyz1234567890";
+    const out = r.redact(`token=${fakeToken}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:GITHUB_PAT]");
+  });
+
+  it("redacts GitHub fine-grained tokens (ghp_)", () => {
+    const r = new DefaultRedactor();
+    // Construct at runtime to avoid GitHub push protection; ghp_ tokens need 30+ chars
+    const fakeToken = "ghp_" + "abcdefghijklmnopqrstuvwxyz12345678";
+    const out = r.redact(`token=${fakeToken}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:GITHUB_TOKEN]");
+  });
+
+  it("redacts AWS access keys", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("AWS_ACCESS_KEY_ID=AKIA_EXAMPLE_REDACTED");
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:AWS_ACCESS_KEY]");
+  });
+
+  it("redacts AWS secret access keys in key=value format", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("AWS_SECRET_ACCESS_KEY=AWS_SECRET_EXAMPLE_REDACTED");
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("AWS_SECRET_ACCESS_KEY=[REDACTED]");
+  });
+
+  it("redacts Azure Storage account keys", () => {
+    const r = new DefaultRedactor();
+    // The regex uses \b at both ends. The trailing \b requires the key (ending in ==)
+    // to be immediately followed by a word character (letter/digit/underscore).
+    // This matches patterns like "AccountKey=...==someWordChar".
+    const fakeKey = "A".repeat(86) + "==";
+    const out = r.redact(`AccountKey=${fakeKey}SomeTrailing`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("AccountKey=[REDACTED:AZURE_KEY]");
+  });
+
+  it("redacts JWT tokens", () => {
+    const r = new DefaultRedactor();
+    // Construct a fake JWT with three base64url segments
+    const header = "eyJhbGciOiJIUzI1NiJ9";
+    const payload = "eyJzdWIiOiIxMjM0NTY3ODkwIn0";
+    const signature = "dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U";
+    const jwt = `${header}.${payload}.${signature}`;
+    const out = r.redact(`Authorization: Bearer ${jwt}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:JWT]");
+  });
+
+  it("redacts Bearer tokens", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("Authorization: Bearer some-opaque-token-value123456");
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("Bearer [REDACTED]");
+  });
+
+  it("redacts Twilio Account SIDs", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("TWILIO_SID=AC" + "a1b2c3d4e5f6".repeat(3).slice(0, 32));
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:TWILIO_SID]");
+  });
+
+  it("redacts HuggingFace tokens", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("HF_TOKEN=hf_abcdefghijklmnopqrstuvwxyz1234");
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:HF_TOKEN]");
+  });
+
+  it("redacts Telegram bot tokens", () => {
+    const r = new DefaultRedactor();
+    const botToken = "123456789:" + "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm";
+    const out = r.redact(`TELEGRAM_TOKEN=${botToken}`);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:TELEGRAM_TOKEN]");
+  });
+
+  it("redacts MongoDB connection strings with credentials", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("MONGO_URI=mongodb://admin:secretpass@db.example.com:27017/mydb");
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:DB_CONN_STRING]");
+  });
+
+  it("redacts MongoDB+srv connection strings", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("MONGO_URI=mongodb+srv://user:pass123@cluster0.abc.mongodb.net/db");
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:DB_CONN_STRING]");
+  });
+
+  it("redacts PostgreSQL connection strings", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("DATABASE_URL=postgresql://user:password@localhost:5432/mydb");
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:DB_CONN_STRING]");
+  });
+
+  it("redacts MySQL connection strings", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("DB=mysql://root:hunter2@mysql.example.com:3306/production");
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:DB_CONN_STRING]");
+  });
+
+  it("redacts Redis connection strings with credentials", () => {
+    const r = new DefaultRedactor();
+    const out = r.redact("REDIS_URL=redis://default:mypassword@redis.example.com:6379/0");
+    expect(out.hadSecrets).toBe(true);
+    expect(out.redactedText).toContain("[REDACTED:DB_CONN_STRING]");
+  });
+
+  it("redacts multiple secrets in a single string", () => {
+    const r = new DefaultRedactor();
+    const input = "OPENAI=sk-abcdefghijklmnopqrstuvwxyz1234567890 DB=postgresql://u:p@host:5432/db";
+    const out = r.redact(input);
+    expect(out.hadSecrets).toBe(true);
+    expect(out.matches.length).toBeGreaterThanOrEqual(2);
+    expect(out.redactedText).not.toContain("sk-abcdefghijklmnopqrstuvwxyz1234567890");
+    expect(out.redactedText).not.toContain("u:p@host");
+  });
+
+  it("counts multiple occurrences of the same secret type", () => {
+    const r = new DefaultRedactor();
+    const key1 = "hf_abcdefghijklmnopqrstuvwxyz1111";
+    const key2 = "hf_abcdefghijklmnopqrstuvwxyz2222";
+    const out = r.redact(`first=${key1} second=${key2}`);
+    expect(out.hadSecrets).toBe(true);
+    const hfMatch = out.matches.find((m) => m.rule === "huggingface_token");
+    expect(hfMatch).toBeDefined();
+    expect(hfMatch!.count).toBe(2);
+  });
 });

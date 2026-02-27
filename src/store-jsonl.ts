@@ -69,6 +69,32 @@ export class JsonlMemoryStore implements MemoryStore {
     return records.find((r) => r.item.id === id)?.item;
   }
 
+  async update(id: string, partial: Partial<Omit<MemoryItem, "id">>): Promise<MemoryItem | undefined> {
+    return this._enqueue(async () => {
+      const records = await this._readAll();
+      const idx = records.findIndex((r) => r.item.id === id);
+      if (idx === -1) return undefined;
+
+      const existing = records[idx]!;
+      const merged: MemoryItem = { ...existing.item, ...partial, id }; // id is immutable
+
+      // Validate kind if it was changed
+      if (partial.kind !== undefined && !VALID_KINDS.has(partial.kind)) {
+        throw new TypeError(
+          `[JsonlMemoryStore] Invalid kind "${partial.kind}". Expected one of: ${[...VALID_KINDS].join(", ")}`
+        );
+      }
+
+      // Re-embed only when the text content changed
+      const needsReEmbed = partial.text !== undefined && partial.text !== existing.item.text;
+      const embedding = needsReEmbed ? await this.embedder.embed(merged.text) : existing.embedding;
+
+      records[idx] = { item: merged, embedding };
+      await this._writeAll(records);
+      return merged;
+    });
+  }
+
   async delete(id: string): Promise<boolean> {
     return this._enqueue(async () => {
       const records = await this._readAll();
