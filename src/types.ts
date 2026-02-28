@@ -142,8 +142,9 @@ export interface CommandDefinition {
 export interface ToolDefinition {
   name: string;
   description: string;
-  inputSchema: Record<string, unknown>;
-  handler: (params: ToolCallParams) => Promise<unknown>;
+  /** JSON Schema for the tool's input parameters. Used by OpenClaw to describe the tool to the AI. */
+  parameters?: Record<string, unknown>;
+  execute(params: ToolCallParams): Promise<unknown>;
 }
 
 export interface PluginApi {
