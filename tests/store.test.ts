@@ -251,6 +251,95 @@ describe("JsonlMemoryStore - addMany()", () => {
 });
 
 // ---------------------------------------------------------------------------
+// deleteMany() bulk deletions (issue #8)
+// ---------------------------------------------------------------------------
+describe("JsonlMemoryStore - deleteMany()", () => {
+  it("deletes multiple items in one call and returns the count", async () => {
+    const { store } = makeStore("-delmany1");
+    await store.addMany([makeItem("d1"), makeItem("d2"), makeItem("d3"), makeItem("d4")]);
+    const count = await store.deleteMany(["d1", "d3"]);
+    expect(count).toBe(2);
+    const listed = await store.list();
+    expect(listed.map((i) => i.id)).toEqual(["d2", "d4"]);
+  });
+
+  it("returns 0 for empty ids array", async () => {
+    const { store } = makeStore("-delmany-empty");
+    await store.add(makeItem("x1"));
+    const count = await store.deleteMany([]);
+    expect(count).toBe(0);
+    const listed = await store.list();
+    expect(listed.length).toBe(1);
+  });
+
+  it("returns 0 when no ids match", async () => {
+    const { store } = makeStore("-delmany-nomatch");
+    await store.add(makeItem("exists"));
+    const count = await store.deleteMany(["ghost1", "ghost2"]);
+    expect(count).toBe(0);
+    const listed = await store.list();
+    expect(listed.length).toBe(1);
+  });
+
+  it("handles partial matches - only counts actually deleted items", async () => {
+    const { store } = makeStore("-delmany-partial");
+    await store.addMany([makeItem("a"), makeItem("b"), makeItem("c")]);
+    const count = await store.deleteMany(["a", "ghost", "c"]);
+    expect(count).toBe(2);
+    const listed = await store.list();
+    expect(listed.map((i) => i.id)).toEqual(["b"]);
+  });
+
+  it("persists deletions across store instances", async () => {
+    const filePath = join(tmpdir(), `mem-delmany-persist-${Date.now()}.jsonl`);
+    const embedder = new HashEmbedder(64);
+    const store1 = new JsonlMemoryStore({ filePath, embedder });
+    await store1.addMany([makeItem("p1"), makeItem("p2"), makeItem("p3")]);
+    await store1.deleteMany(["p1", "p3"]);
+
+    const store2 = new JsonlMemoryStore({ filePath, embedder });
+    const listed = await store2.list();
+    expect(listed.length).toBe(1);
+    expect(listed[0]!.id).toBe("p2");
+  });
+
+  it("handles concurrent deleteMany calls without data corruption", async () => {
+    const { store } = makeStore("-delmany-concurrent");
+    const items = Array.from({ length: 10 }, (_, i) => makeItem(`c${i}`));
+    await store.addMany(items);
+    await Promise.all([
+      store.deleteMany(["c0", "c1", "c2"]),
+      store.deleteMany(["c7", "c8", "c9"]),
+    ]);
+    const listed = await store.list();
+    // c3..c6 should remain (4 items)
+    expect(listed.length).toBe(4);
+    expect(listed.map((i) => i.id)).toEqual(["c3", "c4", "c5", "c6"]);
+  });
+
+  it("deleted items are no longer searchable", async () => {
+    const { store } = makeStore("-delmany-search");
+    await store.addMany([
+      makeItem("s1", { text: "kubernetes docker containers" }),
+      makeItem("s2", { text: "banana apple orange fruit" }),
+    ]);
+    await store.deleteMany(["s1"]);
+    const hits = await store.search("kubernetes containers", { limit: 5 });
+    const ids = hits.map((h) => h.item.id);
+    expect(ids).not.toContain("s1");
+  });
+
+  it("handles duplicate ids in the input gracefully", async () => {
+    const { store } = makeStore("-delmany-dups");
+    await store.addMany([makeItem("dup1"), makeItem("dup2")]);
+    const count = await store.deleteMany(["dup1", "dup1", "dup1"]);
+    expect(count).toBe(1);
+    const listed = await store.list();
+    expect(listed.map((i) => i.id)).toEqual(["dup2"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Append-optimized add() (issue #8)
 // ---------------------------------------------------------------------------
 describe("JsonlMemoryStore - append-optimized add()", () => {

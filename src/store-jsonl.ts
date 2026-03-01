@@ -146,6 +146,18 @@ export class JsonlMemoryStore implements MemoryStore {
     });
   }
 
+  async deleteMany(ids: string[]): Promise<number> {
+    if (ids.length === 0) return 0;
+    return this._enqueue(async () => {
+      const records = await this._readAll();
+      const idSet = new Set(ids);
+      const filtered = records.filter((r) => !idSet.has(r.item.id));
+      const deletedCount = records.length - filtered.length;
+      if (deletedCount > 0) await this._writeAll(filtered);
+      return deletedCount;
+    });
+  }
+
   async list(opts?: ListOpts): Promise<MemoryItem[]> {
     const records = await this._readAll();
     const now = new Date().toISOString();

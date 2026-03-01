@@ -46,6 +46,8 @@ export interface MemoryStore {
   /** Update an existing item by merging partial fields. Returns the updated item, or undefined if not found. */
   update(id: string, partial: Partial<Omit<MemoryItem, "id">>): Promise<MemoryItem | undefined>;
   delete(id: string): Promise<boolean>;
+  /** Delete multiple items in a single read-filter-write cycle. Returns the count of actually deleted items. */
+  deleteMany(ids: string[]): Promise<number>;
   search(query: string, opts?: SearchOpts): Promise<SearchHit[]>;
   list(opts?: ListOpts): Promise<MemoryItem[]>;
   /** Remove all items whose expiresAt is in the past. Returns the number of purged items. */

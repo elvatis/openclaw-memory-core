@@ -163,6 +163,7 @@ interface MemoryStore {
   get(id: string): Promise<MemoryItem | undefined>;
   update(id: string, partial: Partial<Omit<MemoryItem, "id">>): Promise<MemoryItem | undefined>;
   delete(id: string): Promise<boolean>;
+  deleteMany(ids: string[]): Promise<number>;
   search(query: string, opts?: SearchOpts): Promise<SearchHit[]>;
   list(opts?: ListOpts): Promise<MemoryItem[]>;
   purgeExpired(): Promise<number>;
@@ -196,6 +197,7 @@ const store = new JsonlMemoryStore({
 | `get(id)` | Retrieve an item by ID. Returns `undefined` if not found or expired. |
 | `update(id, partial)` | Merge partial fields into an existing item. Re-embeds automatically when `text` changes. Returns the updated item or `undefined`. |
 | `delete(id)` | Remove an item. Returns `true` if it existed. |
+| `deleteMany(ids)` | Remove multiple items in a single read-filter-write cycle. Returns the count of actually deleted items. Uses a `Set` for O(1) lookups. No-op for empty arrays. |
 | `search(query, opts?)` | Vector similarity search. Returns `SearchHit[]` sorted by score. |
 | `list(opts?)` | List items (most recent last). Supports filtering by kind, tags, and expiry. |
 | `purgeExpired()` | Physically remove all expired items from storage. Returns the count of purged items. |
@@ -261,6 +263,14 @@ await store.addMany([
 // All items are immediately searchable
 const hits = await store.search("Vitest migration");
 console.log(hits[0]?.item.text); // "Vitest v2 migration guide"
+```
+
+**Example - bulk delete with `deleteMany()`:**
+
+```ts
+// Delete multiple items in one efficient operation
+const deletedCount = await store.deleteMany(["id-1", "id-2", "id-3"]);
+console.log(deletedCount); // 3 (or fewer if some ids didn't exist)
 ```
 
 #### `DefaultRedactor`
