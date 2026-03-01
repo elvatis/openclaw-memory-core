@@ -133,6 +133,16 @@ interface RedactionResult {
 
 `matches` stores only which rule fired and how many times - never the actual secret text.
 
+#### `Redactor`
+
+```ts
+interface Redactor {
+  redact(text: string): RedactionResult;
+}
+```
+
+The contract that all redactors implement. `DefaultRedactor` is the built-in implementation. You can create custom redactors by implementing this interface.
+
 #### `Embedder`
 
 ```ts
@@ -439,6 +449,7 @@ These types define the contract for OpenClaw plugins (used by `openclaw-memory-b
 | `MessageEventContext` | Context for message events (`messageProvider`, `sessionId`) |
 | `CommandDefinition` | Defines a plugin command (name, description, handler) |
 | `ToolDefinition` | Defines a plugin tool (name, description, input schema, handler) |
+| `ToolCallParams` | Parameters passed to tool handlers (`Record<string, unknown>`) |
 | `PluginApi` | Plugin registration interface - register commands, tools, and event handlers |
 
 **Example - registering a plugin command:**
