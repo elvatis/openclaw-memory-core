@@ -1,4 +1,4 @@
-﻿# openclaw-memory-core: Next Actions for Incoming Agent
+# openclaw-memory-core: Next Actions for Incoming Agent
 
 > Priority order. Work top-down.
 > Each item should be self-contained, the agent must be able to start without asking questions.
@@ -6,59 +6,186 @@
 
 ---
 
-## T-002: Expand test coverage (GitHub issue #6)
+## Status Summary
 
-**Goal:** Add unit tests for embedding.ts, utils.ts, and expand redaction.test.ts to cover all 20 rules.
-
-**Context:**
-- Currently 15 tests in 2 files (store.test.ts, redaction.test.ts)
-- embedding.ts and utils.ts have zero tests
-- Only 8 of 20 redaction rules are tested
-
-**What to do:**
-1. Create `tests/embedding.test.ts` - test HashEmbedder dimensions, determinism, normalization; test cosine similarity
-2. Create `tests/utils.test.ts` - test expandHome, safePath (including path traversal rejection), safeLimit
-3. Expand `tests/redaction.test.ts` - add tests for all untested rules (OpenAI, Anthropic, Stripe, AWS, Azure, JWT, Bearer, HuggingFace, Telegram, DB connection strings)
-4. Run `npm run test` and verify all pass
-5. Update DASHBOARD.md test counts
-
-**Definition of done:**
-- [ ] At least 35 total tests passing
-- [ ] Every exported function has at least one test
+| Status | Count |
+|--------|-------|
+| Done | 10 |
+| Ready | 7 |
+| Blocked | 0 |
 
 ---
 
-## T-003: Add update() method to MemoryStore (GitHub issue #4)
+## Ready - Work These Next
 
-**Goal:** Add a `update()` method to the MemoryStore interface and implement it in JsonlMemoryStore.
+> Note: T-010 through T-016 were imported from the same GitHub issues already completed by T-002 through T-008.
+> Verify the corresponding GitHub issue is still open before starting work - the underlying feature may already exist.
 
-**Context:**
-- Current interface only has add/get/delete/search/list
-- Updating requires delete+add which loses insertion order
+### T-010: Improve README with full API reference and usage examples (GitHub issue #7)
+
+**Goal:** Comprehensive README with install instructions, full API surface, and usage examples.
+
+**Context:** The README was already extensively expanded by T-007. Check current state before making changes.
 
 **What to do:**
-1. Add `update(id: string, patch: Partial<Omit<MemoryItem, 'id'>>): Promise<MemoryItem | undefined>` to MemoryStore interface
-2. Implement in JsonlMemoryStore with re-embedding when text changes
-3. Add unit tests
-4. Run `npm run build` and `npm run test`
+1. Read the current README.md
+2. Compare against issue #7 requirements
+3. Fill any remaining gaps (if any)
+4. Run `npm run ci`
+
+**Files:** `README.md`
 
 **Definition of done:**
-- [ ] Interface updated in types.ts
-- [ ] Implementation in store-jsonl.ts
-- [ ] At least 4 unit tests pass
-- [ ] Build and all tests pass
+- README covers all exported types, classes, and functions
+- Usage examples for store, redaction, embedding, utils
+- Build and tests pass
+
+---
+
+### T-012: Add TTL/expiry support for memory items (GitHub issue #5)
+
+**Goal:** Add optional `expiresAt` field with automatic filtering and purge.
+
+**Context:** TTL/expiry was already implemented by T-005. Verify the current state before starting.
+
+**What to do:**
+1. Check if `expiresAt` field exists in MemoryItem
+2. Check if `purgeExpired()` exists
+3. Check if search/list/get filter expired items
+4. Fill any remaining gaps (if any)
+5. Run `npm run ci`
+
+**Files:** `src/types.ts`, `src/store-jsonl.ts`, `tests/ttl.test.ts`
+
+**Definition of done:**
+- `expiresAt` field on MemoryItem
+- Expired items filtered from reads
+- `purgeExpired()` method
+- Tests pass
+
+---
+
+### T-013: Add update() method to MemoryStore interface (GitHub issue #4)
+
+**Goal:** Partial update support with automatic re-embedding on text changes.
+
+**Context:** `update()` was already implemented by T-003. Verify the current state before starting.
+
+**What to do:**
+1. Check if `update()` exists in MemoryStore interface and JsonlMemoryStore
+2. Fill any remaining gaps (if any)
+3. Run `npm run ci`
+
+**Files:** `src/types.ts`, `src/store-jsonl.ts`, `tests/store.test.ts`
+
+**Definition of done:**
+- `update()` in interface and implementation
+- Re-embeds when text changes
+- Tests pass
+
+---
+
+### T-015: Secret scanner + CI guardrails (GitHub issue #2)
+
+**Goal:** CI job and optional pre-commit hook to scan for secrets before merge.
+
+**Context:** Secret scanner was already implemented by T-006. Verify the current state before starting.
+
+**What to do:**
+1. Check if `scripts/scan-secrets.sh` exists
+2. Check if `.github/workflows/ci.yml` includes secret scanning
+3. Check if `.gitleaks.toml` exists
+4. Fill any remaining gaps (if any)
+5. Run `npm run ci`
+
+**Files:** `scripts/scan-secrets.sh`, `.github/workflows/ci.yml`, `.gitleaks.toml`
+
+**Definition of done:**
+- Secret scanner in CI
+- Docs for allowlist handling
+- Build and tests pass
+
+---
+
+### T-016: Optional semantic embeddings backend (GitHub issue #1)
+
+**Goal:** Pluggable embedder backend with the HashEmbedder as safe default.
+
+**Context:** The `Embedder` interface and `createEmbedder()` factory already exist. Check if issue #1 requirements are fully met.
+
+**What to do:**
+1. Check if `Embedder` interface supports custom providers
+2. Check if `createEmbedder()` factory handles custom vs default
+3. Check if README documents how to swap embedders
+4. Fill any remaining gaps (if any)
+5. Run `npm run ci`
+
+**Files:** `src/types.ts`, `src/embedding.ts`, `README.md`
+
+**Definition of done:**
+- Embedder interface documented
+- createEmbedder() supports custom providers
+- Config examples in README
+- Tests pass
+
+---
+
+### T-011: Expand test coverage for embedding, utils, and redaction (GitHub issue #6)
+
+**Goal:** Unit tests for all exported functions across embedding, utils, and redaction modules.
+
+**Context:** Test coverage was already expanded by T-002 (from 15 to 109+ tests). Verify current state.
+
+**What to do:**
+1. Check current test coverage in `tests/`
+2. Identify any remaining gaps
+3. Fill gaps (if any)
+4. Run `npm run ci`
+
+**Files:** `tests/embedding.test.ts`, `tests/utils.test.ts`, `tests/redaction.test.ts`
+
+**Definition of done:**
+- Every exported function has at least one test
+- Build and all tests pass
+
+---
+
+### T-014: Injection/exfiltration test suite (GitHub issue #3)
+
+**Goal:** Security test fixtures covering prompt injection, exfiltration attempts, and encoded payloads.
+
+**Context:** Injection tests were already implemented by T-004 (67 tests across 14 categories). Verify current state.
+
+**What to do:**
+1. Check `tests/injection.test.ts` exists and covers the required categories
+2. Fill any remaining gaps (if any)
+3. Run `npm run ci`
+
+**Files:** `tests/injection.test.ts`
+
+**Definition of done:**
+- Prompt injection test fixtures
+- Exfiltration attempt tests
+- Encoded payload tests
+- All tests in CI
+
+---
+
+## Blocked
+
+_No blocked tasks._
 
 ---
 
 ## Recently Completed
 
-| Item | Resolution |
-|------|-----------|
-| T-004: Injection/exfiltration test suite | Completed 2026-02-27 - 67 tests across 14 categories covering prompt injection, redaction bypass, JSONL integrity, ReDoS, encoded payloads, maxItems enforcement, redaction idempotency, duplicate IDs, kind validation. 176 total tests. |
-| T-003: Add update() method | Completed 2026-02-27 - update() in interface, store, and 8 tests |
-| T-002: Expand test coverage | Completed 2026-02-27 - 109 tests (up from 15) |
-| T-001: Define v0.2 roadmap | Completed 2026-02-27 - 5 new issues created (#4-#8), 3 existing labeled (#1-#3) |
-| Initial scaffold | Created 2026-02-24 |
+| Task | Date | Resolution |
+|------|------|------------|
+| T-009: Bulk operations and append-optimized writes | 2026-03-01 | deleteMany() added to interface and implementation. 8 new tests (262 total). |
+| T-008: Bulk operations (addMany) | 2026-02-27 | addMany() documented in README. Implementation existed from prior sessions. |
+| T-007: README with full API reference | 2026-02-27 | Comprehensive README with all types, classes, functions, examples. |
+| T-006: Secret scanner + CI guardrails | 2026-02-27 | scan-secrets.sh, gitleaks config, CI workflow. |
+| T-005: TTL/expiry support | 2026-02-27 | expiresAt field, purgeExpired(), automatic filtering. |
 
 ---
 
@@ -66,8 +193,8 @@
 
 | What | Where |
 |------|-------|
-| Source | `src/index.ts` |
+| Source | `src/` (types.ts, store-jsonl.ts, embedding.ts, redaction.ts, utils.ts) |
 | Build config | `tsconfig.json` |
-| Tests | `tests/` |
+| Tests | `tests/` (store, embedding, utils, redaction, ttl, injection) |
+| CI | `.github/workflows/ci.yml` |
 | GitHub Issues | https://github.com/elvatis/openclaw-memory-core/issues |
-
