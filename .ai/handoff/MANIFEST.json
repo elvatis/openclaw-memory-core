@@ -3,9 +3,9 @@
   "project": "openclaw-memory-core",
   "last_session": {
     "agent": "claude-code",
-    "session_id": "t010-readme-api-reference-2026-03-01",
-    "timestamp": "2026-03-01T14:30:00.000Z",
-    "commit": "66b0206",
+    "session_id": "t001-v02-roadmap-close-2026-03-01",
+    "timestamp": "2026-03-01T15:58:00.000Z",
+    "commit": "pending",
     "phase": "implementing",
     "duration_minutes": 3
   },
@@ -39,18 +39,18 @@
       "summary": "Standard AAHP agent workflow."
     }
   },
-  "quick_context": "T-010 done: README now documents all exported types including Redactor and ToolCallParams. Full API reference covers types, classes, functions, TTL, plugin API, and embedder swapping. All v0.2 tasks (T-001 through T-016) completed - GitHub issues #1-#8 all closed. Build and tests passing (262/262).",
+  "quick_context": "T-001 closed: v0.2 roadmap fully defined and executed. All 17 tasks (T-001 through T-016) done - GitHub issues #1-#9 all closed. No open tasks remain. Build and tests passing (262/262). Ready for v0.3 planning.",
   "next_task_id": 17,
   "tasks": {
     "T-001": {
       "title": "Define v0.2 roadmap items as issues and prioritize",
-      "status": "completed",
+      "status": "done",
       "priority": "medium",
       "depends_on": [],
       "created": "2026-02-24T00:00:00Z",
-      "completed": "2026-02-27T01:30:00Z",
       "github_repo": "elvatis/openclaw-memory-core",
-      "github_issue": 9
+      "github_issue": 9,
+      "completed": "2026-03-01T15:58:00.000Z"
     },
     "T-002": {
       "title": "Expand test coverage for embedding, utils, and redaction (issue #6)",
@@ -82,7 +82,7 @@
       "priority": "high",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
-      "github_issue": "https://github.com/elvatis/openclaw-memory-core/issues/5",
+      "github_issue": 5,
       "completed": "2026-02-27T07:47:02.408Z"
     },
     "T-006": {
@@ -91,7 +91,7 @@
       "priority": "medium",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
-      "github_issue": "https://github.com/elvatis/openclaw-memory-core/issues/2",
+      "github_issue": 2,
       "completed": "2026-02-27T07:56:50.996Z"
     },
     "T-007": {
@@ -100,7 +100,7 @@
       "priority": "medium",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
-      "github_issue": "https://github.com/elvatis/openclaw-memory-core/issues/7",
+      "github_issue": 7,
       "completed": "2026-02-27T08:01:12.61Z"
     },
     "T-008": {
@@ -109,7 +109,7 @@
       "priority": "low",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
-      "github_issue": "https://github.com/elvatis/openclaw-memory-core/issues/8",
+      "github_issue": 8,
       "completed": "2026-02-27T08:06:29.187Z"
     },
     "T-009": {
@@ -129,10 +129,10 @@
       "priority": "medium",
       "depends_on": [],
       "created": "2026-03-01T12:58:53.704Z",
-      "notes": "Added missing Redactor and ToolCallParams types to README. Full API reference now covers all exported types, classes, functions, TTL, plugin API, and embedder swapping. Duplicate of T-007 (same GitHub issue #7).",
+      "notes": "## Problem\n\nThe current README is minimal (23 lines). It explains the \"why\" but does not document:\n\n- How to install and import the library\n- The full public API surface (all exported types, classes, and functions)\n- Usage examples for each major feature (store, redaction, embedding, utils)\n- The `uuid()` helper function\n- The Plugin API types (CommandDefinition, ToolDefinition, PluginApi)\n- Configuration options (maxItems, embedder dimensions, custom file paths)\n- How to swap the embedder for a",
       "github_issue": 7,
       "github_repo": "elvatis/openclaw-memory-core",
-      "completed": "2026-03-01T14:30:00.000Z"
+      "completed": "2026-03-01T13:30:56.501Z"
     },
     "T-011": {
       "title": "v0.2: expand test coverage for embedding, utils, and redaction modules",

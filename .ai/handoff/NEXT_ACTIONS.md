@@ -34,26 +34,26 @@ _No blocked tasks._
 
 | Task | Date | Resolution |
 |------|------|------------|
+| T-001: Define v0.2 roadmap items as issues and prioritize | 2026-03-01 | v0.2 roadmap defined as 8 GitHub issues (#1-#8), all prioritized and completed. Issue #9 closed. |
 | T-010: README with full API reference | 2026-03-01 | Added missing Redactor and ToolCallParams types. Full API surface documented. |
 | T-009: Bulk operations (deleteMany) | 2026-03-01 | deleteMany() added to interface and implementation. 8 new tests (262 total). |
 | T-008: Bulk operations (addMany) | 2026-02-27 | addMany() with append-optimized writes and parallel embedding. |
 | T-007: README with full API reference | 2026-02-27 | Comprehensive README with all types, classes, functions, examples. |
-| T-006: Secret scanner + CI guardrails | 2026-02-27 | scan-secrets.sh, gitleaks config, CI workflow. |
 
 ---
 
 ## v0.2 Completion Summary
 
-All 16 tasks from the v0.2 roadmap are complete. GitHub issues #1-#8 are all closed.
+All 17 tasks from the v0.2 roadmap are complete. GitHub issues #1-#9 are all closed.
 
 | Area | Tasks | Key deliverables |
 |------|-------|-----------------|
+| Planning | T-001 | 8 GitHub issues defined and prioritized across 3 priority levels |
 | Test coverage | T-002, T-011 | 262 tests across 6 test files |
 | Features | T-003/T-013 (update), T-005/T-012 (TTL), T-008/T-009 (bulk ops) | Full CRUD, TTL/expiry, addMany/deleteMany |
 | Security | T-004/T-014 (injection tests), T-006/T-015 (secret scanner) | 91 injection tests, CI secret scanning |
 | Docs | T-007/T-010 (README) | 530+ line API reference with examples |
 | Architecture | T-016 (embedder backend) | Pluggable Embedder interface with docs |
-| Planning | T-001 (roadmap) | 8 GitHub issues defined and prioritized |
 
 ---
 
