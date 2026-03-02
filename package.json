@@ -1,6 +1,6 @@
 {
   "name": "@elvatis_com/openclaw-memory-core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Core utilities for OpenClaw memory plugins (redaction, local store, embeddings)",
   "type": "module",
   "main": "dist/index.js",
