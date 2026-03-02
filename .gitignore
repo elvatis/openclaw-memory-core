@@ -7,3 +7,4 @@ dist/
 tests/*.js
 tests/*.js.map
 tests/*.d.ts
+.ai/logs/
