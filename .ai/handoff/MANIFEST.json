@@ -45,7 +45,7 @@
     "T-001": {
       "title": "Define v0.2 roadmap items as issues and prioritize",
       "status": "done",
-      "priority": "medium",
+      "priority": "low",
       "depends_on": [],
       "created": "2026-02-24T00:00:00Z",
       "github_repo": "elvatis/openclaw-memory-core",
@@ -79,7 +79,7 @@
     "T-005": {
       "title": "Add TTL/expiry support for memory items",
       "status": "done",
-      "priority": "high",
+      "priority": "medium",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
       "github_issue": 5,
@@ -106,7 +106,7 @@
     "T-008": {
       "title": "Add bulk operations and append-optimized writes (addMany)",
       "status": "done",
-      "priority": "low",
+      "priority": "medium",
       "depends_on": [],
       "created": "2026-02-27T08:40:56Z",
       "github_issue": 8,
@@ -137,7 +137,7 @@
     "T-011": {
       "title": "v0.2: expand test coverage for embedding, utils, and redaction modules",
       "status": "done",
-      "priority": "low",
+      "priority": "high",
       "depends_on": [],
       "created": "2026-03-01T12:58:53.704Z",
       "notes": "Duplicate of T-002. Already completed - 262 tests covering embedding, utils, and all 21 redaction rules. GitHub issue #6 closed.",
@@ -159,7 +159,7 @@
     "T-013": {
       "title": "v0.2: add update() method to MemoryStore interface",
       "status": "done",
-      "priority": "medium",
+      "priority": "high",
       "depends_on": [],
       "created": "2026-03-01T12:58:53.704Z",
       "notes": "Duplicate of T-003. Already completed - update() with partial merge, auto re-embed on text change. GitHub issue #4 closed.",
@@ -170,7 +170,7 @@
     "T-014": {
       "title": "v0.2: injection/exfiltration test suite",
       "status": "done",
-      "priority": "low",
+      "priority": "high",
       "depends_on": [],
       "created": "2026-03-01T12:58:53.704Z",
       "notes": "Duplicate of T-004. Already completed - 91 injection/exfiltration tests. GitHub issue #3 closed.",
