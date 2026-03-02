@@ -7,6 +7,8 @@ export interface MemoryItem {
   createdAt: string; // ISO
   /** Optional expiry timestamp (ISO 8601). Items past this time are excluded from reads by default. */
   expiresAt?: string;
+  /** ISO timestamp of last retrieval via search or list. Used for recency-based ranking. */
+  lastAccessedAt?: string;
   source?: {
     channel?: string;
     from?: string;
