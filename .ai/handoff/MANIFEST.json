@@ -40,7 +40,7 @@
     }
   },
   "quick_context": "T-001 closed: v0.2 roadmap fully defined and executed. All 17 tasks (T-001 through T-016) done - GitHub issues #1-#9 all closed. No open tasks remain. Build and tests passing (262/262). Ready for v0.3 planning.",
-  "next_task_id": 17,
+  "next_task_id": 18,
   "tasks": {
     "T-001": {
       "title": "Define v0.2 roadmap items as issues and prioritize",
@@ -199,6 +199,16 @@
       "github_issue": 1,
       "github_repo": "elvatis/openclaw-memory-core",
       "completed": "2026-02-27T08:06:29.187Z"
+    },
+    "T-017": {
+      "title": "[CI] Failed run 22492071389 — package.json invalid JSON",
+      "status": "ready",
+      "priority": "high",
+      "depends_on": [],
+      "created": "2026-03-07T06:58:45.098Z",
+      "notes": "Automated CI triage created by Akido.\n\nRepository: elvatis/openclaw-memory-core\nFailed run: 22492071389\nRun URL: https://github.com/elvatis/openclaw-memory-core/actions/runs/22492071389\n\nSummary:\npackage.json invalid JSON\n\nRelevant log excerpts:\n- See the Actions run for full logs: https://github.com/elvatis/openclaw-memory-core/actions/runs/22492071389\n\nSuggested next steps:\n- Reproduce locally: run the CI steps (install deps, tsc, lint, tests).\n- Apply the suggested fix from the automated scan",
+      "github_issue": 10,
+      "github_repo": "elvatis/openclaw-memory-core"
     }
   }
 }
