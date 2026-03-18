@@ -40,5 +40,6 @@
     "extensions": [
       "./src/index.ts"
     ]
-  }
+  },
+  "license": "Apache-2.0"
 }
