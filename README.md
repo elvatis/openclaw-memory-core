@@ -1,5 +1,7 @@
 # @elvatis_com/openclaw-memory-core
 
+**Library for memory plugins, not a standalone plugin.** Import this in `openclaw-memory-brain` or `openclaw-memory-docs` — do not install as an OpenClaw plugin directly.
+
 Core utilities for building OpenClaw memory plugins - redaction, embeddings, and JSONL-backed vector search.
 
 ## Installation
